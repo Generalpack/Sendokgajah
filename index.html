@@ -118,11 +118,35 @@
             .add-stock-box > div > div { width: 100% !important; margin-bottom: 10px; }
         }
 
-        /* CSS KHUSUS PRINTING */
+        /* CSS KHUSUS PRINTING (STABILIZED) */
         @media print {
-            body * { visibility: hidden; }
-            #print-nota, #print-nota * { visibility: visible; }
-            #print-nota { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif; background: white; color: black; }
+            body { background-color: white; margin: 0; padding: 0; }
+            body.printing-nota .sidebar, 
+            body.printing-nota .main-content, 
+            body.printing-nota #loading-overlay { display: none !important; }
+            
+            body.printing-laporan .sidebar, 
+            body.printing-laporan .header, 
+            body.printing-laporan #loading-overlay { display: none !important; }
+            
+            body.printing-laporan .main-content { padding: 0; width: 100%; }
+            body.printing-laporan #page-dashboard, 
+            body.printing-laporan #page-stok, 
+            body.printing-laporan #page-pemesanan { display: none !important; }
+            
+            body.printing-nota #print-nota { 
+                display: block !important; 
+                width: 100%; 
+                font-family: 'Segoe UI', Arial, sans-serif; 
+                background: white; 
+                color: black; 
+            }
+            
+            /* Pastikan background gambar & warna ikut ter-print */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
         }
     </style>
 </head>
@@ -359,7 +383,7 @@
                 <h2 style="margin: 0; font-size: 26px; padding-top: 10px;">NOTA PEMESANAN</h2>
             </div>
             <div style="text-align: right; flex: 1;">
-                <img src="logo.jpg" alt="Logo Sendok Gajah" style="max-width: 100px; height: auto; margin-bottom: 8px;">
+                <img src="logo.jpg" alt="Logo Sendok Gajah" style="max-width: 120px; height: auto; margin-bottom: 8px; display: inline-block;">
                 <p id="nota-tanggal" style="font-size: 14px; margin: 0; color: #555;"></p>
                 <p id="nota-toko" style="font-size: 18px; font-weight: bold; margin: 4px 0 0 0;"></p>
             </div>
@@ -434,7 +458,7 @@
                 updateAllViews();
             } catch (error) {
                 console.error("Detail Error:", error);
-                alert("Koneksi Error! Pastikan Google Script Anda benar.");
+                alert("Koneksi Error! Pastikan Google Script Anda benar dan di-Deploy 'Anyone'.");
             } finally {
                 hideLoading();
             }
@@ -512,8 +536,9 @@
                             </button>
                         </td>
                     </tr>`;
-                // Jika ID kosong, jangan tampilkan di select, biar user sadar ada yang salah.
-                if(item.id) {
+                
+                // Pastikan hanya item yang memiliki ID yang masuk ke Dropdown, mencegah bug.
+                if (item.id) {
                     selectTambah.innerHTML += `<option value="${item.id}">${item.nama}</option>`;
                 }
             });
@@ -525,7 +550,7 @@
             const qty = parseInt(document.getElementById('tambah-qty').value);
 
             if(!tgl) { alert("Harap isi Tanggal Masuk!"); return; }
-            if(idBarang === "" || idBarang === "undefined") { alert("ID Barang kosong! Harap pastikan Kolom A (ID) di Google Sheets telah terisi."); return; }
+            if(!idBarang) { alert("ID Barang kosong! Harap pastikan Kolom A (ID) di Google Sheets telah terisi."); return; }
             if(isNaN(qty) || qty <= 0) { alert("Jumlah Pcs harus berupa angka lebih dari 0!"); return; }
 
             showLoading("Menyimpan Stok ke Cloud...");
@@ -635,7 +660,7 @@
             const hargaPack = parseInt(document.getElementById('input-harga').value);
 
             if(!rawDate) { alert("Isi tanggal pemesanan!"); return; }
-            if(idBarang === "" || idBarang === "undefined") { alert("ID Barang kosong, lengkapi data Sheets!"); return; }
+            if(!idBarang) { alert("ID Barang kosong, lengkapi data Sheets!"); return; }
             if(isNaN(qtyPack) || qtyPack <= 0 || isNaN(hargaPack) || hargaPack <= 0) { alert("Jumlah & Harga tidak valid!"); return; }
 
             const item = items.find(i => String(i.id) === String(idBarang));
