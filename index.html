@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sendok Gajah - Dashboard Inventaris Cloud</title>
+    <title>SpoonStock - Dashboard Inventaris Cloud</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -178,6 +178,10 @@
             <div class="add-stock-box">
                 <h3 style="margin-bottom: 15px; font-size: 16px;"><i class="fas fa-plus-circle"></i> Tambah Stok Masuk</h3>
                 <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="width: 150px;">
+                        <label class="info-text" style="font-weight: bold; margin-bottom: 5px;">Tanggal Masuk</label>
+                        <input type="date" id="tambah-tanggal" class="form-control">
+                    </div>
                     <div style="flex: 1; min-width: 200px;">
                         <label class="info-text" style="font-weight: bold; margin-bottom: 5px;">Pilih Barang</label>
                         <select id="tambah-id-barang" class="form-control"></select>
@@ -340,12 +344,20 @@
         const hideLoading = () => { document.getElementById('loading-overlay').style.display = 'none'; };
 
         // =======================
-        // FUNGSI KOMUNIKASI DATABASE (FETCH API)
+        // FUNGSI KOMUNIKASI DATABASE (DIPERBARUI UNTUK MENCEGAH ERROR CORS)
         // =======================
         async function loadFromDatabase() {
             showLoading("Mengambil Data dari Google Sheets...");
             try {
-                let response = await fetch(SCRIPT_URL + "?action=getInitialData", { method: "POST" });
+                let response = await fetch(SCRIPT_URL + "?action=getInitialData", { 
+                    method: "POST",
+                    redirect: "follow",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({}) 
+                });
+                
+                if (!response.ok) throw new Error("Gagal terhubung ke server");
+                
                 let data = await response.json();
 
                 // Mapping data Barang
@@ -364,8 +376,8 @@
                 document.getElementById('input-tanggal').value = new Date().toISOString().split('T')[0];
                 updateAllViews();
             } catch (error) {
-                console.error(error);
-                alert("Koneksi Error! Gagal mengambil data dari Database Google Sheets.");
+                console.error("Detail Error:", error);
+                alert("Koneksi Error! Pastikan pengaturan Deploy Google Script diset 'Who has access: Anyone'.");
             } finally {
                 hideLoading();
             }
@@ -439,17 +451,20 @@
         };
 
         async function tambahStok() {
+            const tgl = document.getElementById('tambah-tanggal').value;
             const idBarang = parseInt(document.getElementById('tambah-id-barang').value);
             const qty = parseInt(document.getElementById('tambah-qty').value);
 
-            if(!idBarang || !qty || qty <= 0) {
-                alert("Harap Pilih Barang dan Masukkan Jumlah Pcs!"); return;
+            if(!tgl || !idBarang || !qty || qty <= 0) {
+                alert("Harap lengkapi Tanggal, Jenis Barang, dan Jumlah Pcs!"); return;
             }
 
             showLoading("Menyimpan ke Google Sheets...");
             try {
                 await fetch(SCRIPT_URL + "?action=addStock", {
                     method: "POST",
+                    redirect: "follow",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ id: idBarang, qty: qty })
                 });
 
@@ -517,6 +532,8 @@
             try {
                 await fetch(SCRIPT_URL + "?action=processOrder", {
                     method: "POST",
+                    redirect: "follow",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify(payload)
                 });
 
@@ -528,6 +545,7 @@
                 // Refresh data background
                 await loadFromDatabase();
             } catch (error) {
+                console.error(error);
                 alert("Gagal memproses pesanan di Database.");
                 hideLoading();
             }
