@@ -496,7 +496,7 @@
                         <td><span class="badge badge-danger">${formatNumber(item.stokRusak)} Pcs</span></td>
                         <td><span class="badge badge-ready">${textPack}</span></td>
                         <td>
-                            <button class="btn btn-warning" style="padding: 5px 10px; font-size:12px;" onclick="editStokRusak(${item.id})">
+                            <button class="btn btn-warning" style="padding: 5px 10px; font-size:12px;" onclick="editStokRusak('${item.id}')">
                                 <i class="fas fa-edit"></i> Edit Rusak
                             </button>
                         </td>
@@ -507,11 +507,12 @@
 
         async function tambahStok() {
             const tgl = document.getElementById('tambah-tanggal').value;
-            const idBarang = parseInt(document.getElementById('tambah-id-barang').value);
+            // FIXED: Menggunakan value murni tanpa parseInt untuk menghindari NaN jika ID berupa String
+            const idBarang = document.getElementById('tambah-id-barang').value;
             const qty = parseInt(document.getElementById('tambah-qty').value);
 
-            if(!tgl || !idBarang || !qty || qty <= 0) {
-                alert("Harap lengkapi Tanggal, Jenis Barang, dan Jumlah Pcs!"); return;
+            if(!tgl || idBarang === "" || isNaN(qty) || qty <= 0) {
+                alert("Harap lengkapi Tanggal, Jenis Barang, dan Jumlah Pcs dengan benar!"); return;
             }
 
             showLoading("Menyimpan ke Google Sheets...");
@@ -532,7 +533,8 @@
 
         // FITUR BARU: Edit Stok Rusak
         async function editStokRusak(idBarang) {
-            const item = items.find(i => i.id === idBarang);
+            // FIXED: Mencari ID dengan mengubah kedua sisi menjadi string (agar aman dari tipe data)
+            const item = items.find(i => String(i.id) === String(idBarang));
             let input = prompt(`Edit Stok Rusak untuk:\n${item.nama}\n\nMasukkan jumlah Pcs rusak yang baru:`, item.stokRusak);
             
             if (input !== null && input !== "") {
@@ -564,8 +566,8 @@
         };
 
         const updateFormOrder = () => {
-            const idBarang = parseInt(document.getElementById('input-barang').value);
-            const item = items.find(i => i.id === idBarang);
+            const idBarang = document.getElementById('input-barang').value;
+            const item = items.find(i => String(i.id) === String(idBarang));
             if(item) {
                 document.getElementById('info-stok').innerText = `Stok Tersedia: ${getPackTersedia(item)} Pack`;
                 document.getElementById('input-harga').value = item.hargaPcs * PCS_PER_PACK; 
@@ -580,15 +582,17 @@
         };
 
         async function prosesPesanan() {
-            const idBarang = parseInt(document.getElementById('input-barang').value);
+            const idBarang = document.getElementById('input-barang').value;
             const toko = document.getElementById('input-toko').value;
             const rawDate = document.getElementById('input-tanggal').value;
             const qtyPack = parseInt(document.getElementById('input-qty').value);
             const hargaPack = parseInt(document.getElementById('input-harga').value);
 
-            if(!rawDate || qtyPack <= 0 || hargaPack <= 0) { alert("Harap isi form pemesanan dengan benar!"); return; }
+            if(!rawDate || idBarang === "" || isNaN(qtyPack) || qtyPack <= 0 || isNaN(hargaPack) || hargaPack <= 0) { 
+                alert("Harap isi form pemesanan dengan benar!"); return; 
+            }
 
-            const item = items.find(i => i.id === idBarang);
+            const item = items.find(i => String(i.id) === String(idBarang));
             if(qtyPack > getPackTersedia(item)) { alert("Stok tidak mencukupi!"); return; }
 
             const totalHarga = qtyPack * hargaPack;
@@ -612,7 +616,7 @@
         }
 
         function cetakNotaLokal(rawDate, toko, qtyPack, namaBarang, hargaPack, totalHarga) {
-            const tglFormatted = new Date(rawDate).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+            const tglFormatted = new Date(rawDate).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
             document.getElementById('nota-tanggal').innerText = tglFormatted;
             document.getElementById('nota-toko').innerText = toko;
             document.getElementById('nota-body').innerHTML = `
@@ -625,11 +629,12 @@
             `;
             document.getElementById('nota-total').innerText = formatRupiah(totalHarga);
 
-            // Trigger Print
+            // FIXED: Render CSS Print Note dengan Delay 
             document.body.classList.add('printing-nota');
             setTimeout(() => {
                 window.print();
-                document.body.classList.remove('printing-nota');
+                // Setelah dialog print tertutup, kembalikan tampilan
+                setTimeout(() => { document.body.classList.remove('printing-nota'); }, 1000);
             }, 300);
         }
 
@@ -677,7 +682,10 @@
 
         const cetakLaporan = () => {
             document.body.classList.add('printing-laporan');
-            setTimeout(() => { window.print(); document.body.classList.remove('printing-laporan'); }, 200);
+            setTimeout(() => { 
+                window.print(); 
+                setTimeout(() => { document.body.classList.remove('printing-laporan'); }, 1000);
+            }, 200);
         };
 
         const downloadExcel = () => {
