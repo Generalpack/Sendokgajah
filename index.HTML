@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpoonStock - Dashboard Inventaris Cloud</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); display: flex; min-height: 100vh; }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9); z-index: 9999;
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            font-size: 20px; font-weight: bold; color: var(--primary-color);
+        }
+        .spinner { font-size: 40px; margin-bottom: 15px; color: var(--accent-color); }
+
+        /* Sidebar Styles */
+        .sidebar { width: 250px; background-color: var(--primary-color); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 20px; text-align: center; font-size: 24px; font-weight: bold; background-color: #1a252f; border-bottom: 1px solid var(--secondary-color); }
+        .sidebar-menu { list-style: none; padding: 20px 0; }
+        .sidebar-menu li { padding: 15px 25px; transition: 0.3s; cursor: pointer; }
+        .sidebar-menu li:hover, .sidebar-menu li.active { background-color: var(--accent-color); }
+        .sidebar-menu li i { margin-right: 10px; width: 20px; text-align: center; }
+
+        /* Main Content Styles */
+        .main-content { flex: 1; padding: 20px 40px; overflow-y: auto; position: relative; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { color: var(--text-color); font-size: 28px; }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+
+        /* Dashboard Cards */
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .dashboard-card { background: var(--card-bg); padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card-info h3 { font-size: 14px; color: #7f8c8d; margin-bottom: 5px; }
+        .card-info h2 { font-size: 24px; color: var(--text-color); }
+        .card-icon { font-size: 40px; color: var(--accent-color); opacity: 0.8; }
+        .dashboard-card.success .card-icon { color: var(--success-color); }
+        .dashboard-card.warning .card-icon { color: var(--warning-color); }
+
+        /* Layouting & Cards */
+        .card-container { background-color: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; overflow-x: auto; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .section-header h2 { font-size: 18px; color: var(--text-color); }
+
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; color: var(--secondary-color); font-weight: 600; }
+        tr:hover { background-color: #f1f2f6; }
+
+        /* Badges */
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
+        .badge-raw { background-color: #fef08a; color: #854d0e; }
+        .badge-ready { background-color: #bbf7d0; color: #166534; }
+        .badge-danger { background-color: #fecaca; color: #991b1b; }
+        .badge-info { background-color: #bfdbfe; color: #1e3a8a; }
+
+        /* Form Styles */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
+        .form-control:focus { outline: none; border-color: var(--accent-color); }
+        .info-text { font-size: 12px; color: #7f8c8d; margin-top: 5px; display: block; }
+        
+        .btn { background-color: var(--accent-color); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn:hover { background-color: #2980b9; }
+        .btn-success { background-color: var(--success-color); }
+        .btn-success:hover { background-color: #27ae60; }
+        
+        .hidden { display: none !important; }
+        .total-display { font-size: 24px; font-weight: bold; color: var(--secondary-color); margin-top: 10px; }
+        .add-stock-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 20px; }
+
+        /* Area Cetak Nota */
+        #print-nota { display: none; }
+        .nota-table th, .nota-table td { border: 1px solid #000; padding: 10px; }
+        .nota-table th { background-color: #fff; color: #000; }
+
+        /* CSS KHUSUS PRINTING */
+        @media print {
+            body.printing-nota .sidebar, body.printing-nota .main-content, body.printing-nota #loading-overlay { display: none !important; }
+            body.printing-laporan .sidebar, body.printing-laporan .header, body.printing-laporan #loading-overlay { display: none !important; }
+            body.printing-laporan .main-content { padding: 0; }
+            body.printing-laporan #page-dashboard, body.printing-laporan #page-stok, body.printing-laporan #page-pemesanan { display: none !important; }
+            
+            body.printing-nota #print-nota { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 30px; font-family: 'Courier New', Courier, monospace; background: white; color: black; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <i class="fas fa-circle-notch fa-spin spinner"></i>
+        <span id="loading-text">Sinkronisasi Database Cloud...</span>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-utensils"></i> SpoonStock
+        </div>
+        <ul class="sidebar-menu">
+            <li id="nav-dashboard" class="active" onclick="switchTab('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+            <li id="nav-stok" onclick="switchTab('stok')"><i class="fas fa-box"></i> Stok Barang</li>
+            <li id="nav-pemesanan" onclick="switchTab('pemesanan')"><i class="fas fa-shopping-cart"></i> Pemesanan</li>
+            <li id="nav-laporan" onclick="switchTab('laporan')"><i class="fas fa-chart-line"></i> Laporan</li>
+            <li onclick="loadFromDatabase()"><i class="fas fa-sync-alt"></i> Refresh Data</li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1 id="page-title">Dashboard Analitik</h1>
+            <div class="user-profile">
+                <i class="fas fa-cloud fa-2x" style="color: var(--success-color);"></i>
+                <span>Database Terhubung</span>
+            </div>
+        </div>
+
+        <div id="page-dashboard">
+            <div class="cards-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="dashboard-card warning">
+                    <div class="card-info">
+                        <h3>Total Penjualan Keseluruhan</h3>
+                        <h2 id="dash-terjual">0 Pack</h2>
+                    </div>
+                    <div class="card-icon"><i class="fas fa-shopping-cart"></i></div>
+                </div>
+                <div class="dashboard-card success">
+                    <div class="card-info">
+                        <h3>Total Pendapatan Keseluruhan</h3>
+                        <h2 id="dash-pendapatan">Rp 0</h2>
+                    </div>
+                    <div class="card-icon"><i class="fas fa-wallet"></i></div>
+                </div>
+            </div>
+
+            <div class="section-header" style="margin-top: 10px;">
+                <h2>Stok Tersedia (Per Jenis Barang)</h2>
+            </div>
+            <div class="cards-grid" id="dash-stok-per-barang"></div>
+
+            <div class="card-container">
+                <div class="section-header">
+                    <h2>Riwayat Transaksi Terakhir (Pemesanan)</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Nama Toko</th>
+                            <th>Barang</th>
+                            <th>Total Pembelian</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-dash-riwayat"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="page-stok" class="hidden">
+            <div class="add-stock-box">
+                <h3 style="margin-bottom: 15px; font-size: 16px;"><i class="fas fa-plus-circle"></i> Tambah Stok Masuk</h3>
+                <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label class="info-text" style="font-weight: bold; margin-bottom: 5px;">Pilih Barang</label>
+                        <select id="tambah-id-barang" class="form-control"></select>
+                    </div>
+                    <div style="width: 150px;">
+                        <label class="info-text" style="font-weight: bold; margin-bottom: 5px;">Jumlah (Pcs)</label>
+                        <input type="number" id="tambah-qty" class="form-control" min="1" placeholder="0">
+                    </div>
+                    <div>
+                        <button class="btn" onclick="tambahStok()"><i class="fas fa-cloud-upload-alt"></i> Update Cloud</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-container">
+                <div class="section-header">
+                    <h2>Data Inventaris Gudang</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Jenis Barang</th>
+                            <th>Harga Default/Pcs</th>
+                            <th>Stok Mentah</th>
+                            <th>Stok Rusak</th>
+                            <th>Stok Jadi (Pack)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-stok"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="page-pemesanan" class="hidden">
+            <div class="card-container">
+                <div class="section-header">
+                    <h2>Buat Pesanan Baru</h2>
+                </div>
+                <div class="form-grid">
+                    <div>
+                        <div class="form-group">
+                            <label>Tanggal Pemesanan</label>
+                            <input type="date" id="input-tanggal" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Toko / Pemesan</label>
+                            <select id="input-toko" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Pilih Barang</label>
+                            <select id="input-barang" class="form-control" onchange="updateFormOrder()"></select>
+                            <span id="info-stok" class="info-text">Tersedia: 0 Pack</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Jumlah Beli (Pack)</label>
+                            <input type="number" id="input-qty" class="form-control" min="1" value="1" onchange="calculateTotal()" onkeyup="calculateTotal()">
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-group">
+                            <label>Harga per Pack (Bisa diubah sesuai harga pasar)</label>
+                            <input type="number" id="input-harga" class="form-control" onchange="calculateTotal()" onkeyup="calculateTotal()">
+                            <span class="info-text">1 Pack = 50 Pcs</span>
+                        </div>
+                        <div class="form-group" style="margin-top: 30px;">
+                            <label>Total Harga:</label>
+                            <div id="display-total" class="total-display">Rp 0</div>
+                        </div>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <button class="btn btn-success" onclick="prosesPesanan()"><i class="fas fa-print"></i> Proses & Cetak Nota</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-laporan" class="hidden">
+            <div class="card-container">
+                <div class="section-header">
+                    <h2>Rekap Laporan Penjualan per Barang</h2>
+                    <button class="btn" onclick="cetakLaporan()"><i class="fas fa-print"></i> Cetak Laporan (PDF)</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nama Barang</th>
+                            <th>Total Pack Terjual</th>
+                            <th>Estimasi PCS Terjual</th>
+                            <th>Total Pendapatan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-laporan"></tbody>
+                </table>
+            </div>
+
+            <div class="card-container">
+                <div class="section-header">
+                    <h2>Laporan Transaksi Penjualan Bulanan</h2>
+                    <button class="btn btn-success" onclick="downloadExcel()"><i class="fas fa-file-excel"></i> Download Rincian Excel</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bulan & Tahun</th>
+                            <th>Total Penjualan (Pack)</th>
+                            <th>Total Pendapatan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-laporan-bulanan"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-nota">
+        <div style="text-align: right; margin-bottom: 20px; line-height: 1.5;">
+            <p id="nota-tanggal" style="font-size: 16px; margin: 0;"></p>
+            <p id="nota-toko" style="font-size: 20px; font-weight: bold; margin: 0;"></p>
+        </div>
+        <h2 style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #000; padding-bottom: 10px; font-size: 24px;">NOTA PEMESANAN</h2>
+        
+        <table class="nota-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid #000; padding: 10px; text-align: center;">Banyaknya</th>
+                    <th style="border: 1px solid #000; padding: 10px; text-align: left;">Nama Barang</th>
+                    <th style="border: 1px solid #000; padding: 10px; text-align: right;">Harga (@Pack)</th>
+                    <th style="border: 1px solid #000; padding: 10px; text-align: right;">Jumlah Harga</th>
+                </tr>
+            </thead>
+            <tbody id="nota-body"></tbody>
+        </table>
+        
+        <div style="text-align: right; margin-top: 20px; font-size: 20px; font-weight: bold; border-top: 2px dashed #000; padding-top: 10px;">
+            Total: <span id="nota-total"></span>
+        </div>
+        <div style="text-align: center; margin-top: 50px; font-size: 14px; font-style: italic;">
+            Terima kasih atas pesanan Anda. Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.
+        </div>
+    </div>
+
+    <script>
+        // ======= KONFIGURASI API GOOGLE SCRIPT =======
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbws4wUnmxVsl5POZsF4ydOnzpVk11TnBD_q87hXpGAPvWkvlb3RbTJvUu9vOFrCbUoE/exec";
+        
+        let items = [];
+        let daftarToko = [];
+        let riwayatPesanan = [];
+        const PCS_PER_PACK = 50;
+
+        // Utilities
+        const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+        const formatNumber = (angka) => new Intl.NumberFormat('id-ID').format(angka);
+        const getPackTersedia = (item) => Math.floor((item.stokMentah - item.stokRusak) / PCS_PER_PACK);
+        
+        const showLoading = (text) => { 
+            document.getElementById('loading-text').innerText = text; 
+            document.getElementById('loading-overlay').style.display = 'flex'; 
+        };
+        const hideLoading = () => { document.getElementById('loading-overlay').style.display = 'none'; };
+
+        // =======================
+        // FUNGSI KOMUNIKASI DATABASE (FETCH API)
+        // =======================
+        async function loadFromDatabase() {
+            showLoading("Mengambil Data dari Google Sheets...");
+            try {
+                let response = await fetch(SCRIPT_URL + "?action=getInitialData", { method: "POST" });
+                let data = await response.json();
+
+                // Mapping data Barang
+                items = data.items.map(r => ({ id: r[0], nama: r[1], hargaPcs: r[2], stokMentah: r[3], stokRusak: r[4] }));
+                
+                // Mapping data Toko
+                daftarToko = data.stores;
+                
+                // Mapping data Pesanan (di-reverse agar yang terbaru di atas)
+                riwayatPesanan = data.orders.map(r => ({
+                    rawDate: r[0], 
+                    tgl: new Date(r[0]).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'}),
+                    toko: r[1], namaBarang: r[2], qty: r[3], harga: r[4], total: r[5]
+                })).reverse();
+
+                document.getElementById('input-tanggal').value = new Date().toISOString().split('T')[0];
+                updateAllViews();
+            } catch (error) {
+                console.error(error);
+                alert("Koneksi Error! Gagal mengambil data dari Database Google Sheets.");
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // =======================
+        // DASHBOARD
+        // =======================
+        const renderDashboard = () => {
+            let totalTerjual = 0; let totalPendapatan = 0;
+            riwayatPesanan.forEach(r => { totalTerjual += r.qty; totalPendapatan += r.total; });
+
+            document.getElementById('dash-terjual').innerText = formatNumber(totalTerjual) + " Pack";
+            document.getElementById('dash-pendapatan').innerText = formatRupiah(totalPendapatan);
+
+            const containerStok = document.getElementById('dash-stok-per-barang');
+            containerStok.innerHTML = items.map(i => {
+                const packs = getPackTersedia(i);
+                const sisaPcs = (i.stokMentah - i.stokRusak) % PCS_PER_PACK;
+                let textPack = `${formatNumber(packs)} Pack`;
+                if(sisaPcs > 0) textPack += ` <span style="font-size:12px; font-weight:normal;">(+${sisaPcs} Pcs)</span>`;
+
+                return `
+                <div class="dashboard-card" style="align-items: flex-start; border-top: 4px solid var(--accent-color);">
+                    <div class="card-info" style="flex:1;">
+                        <h3 style="color: var(--secondary-color); font-size: 13px; margin-bottom: 8px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${i.nama}">${i.nama}</h3>
+                        <h2 style="font-size: 22px; color: var(--accent-color);">${textPack}</h2>
+                        <span style="font-size: 11px; color: #7f8c8d; display:block; margin-top:8px;">Mentah: <strong>${formatNumber(i.stokMentah)}</strong> Pcs | Rusak: <strong>${i.stokRusak}</strong></span>
+                    </div>
+                    <div class="card-icon" style="font-size:24px; margin-left: 10px;"><i class="fas fa-box"></i></div>
+                </div>`;
+            }).join('');
+
+            const tbody = document.getElementById('table-dash-riwayat');
+            const riwayatLimit = riwayatPesanan.slice(0, 5);
+            if(riwayatLimit.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">Belum ada transaksi</td></tr>`;
+            } else {
+                tbody.innerHTML = riwayatLimit.map(r => `
+                    <tr><td>${r.tgl}</td><td><strong>${r.toko}</strong></td><td>${r.namaBarang} (${r.qty} Pack)</td><td style="font-weight:bold; color:var(--success-color);">${formatRupiah(r.total)}</td></tr>
+                `).join('');
+            }
+        };
+
+        // =======================
+        // STOK BARANG
+        // =======================
+        const renderStok = () => {
+            const tbody = document.getElementById('table-stok');
+            const selectTambah = document.getElementById('tambah-id-barang');
+            
+            tbody.innerHTML = '';
+            selectTambah.innerHTML = '<option value="">-- Pilih Barang --</option>';
+
+            items.forEach(item => {
+                const packs = getPackTersedia(item);
+                const sisaPcs = (item.stokMentah - item.stokRusak) % PCS_PER_PACK;
+                let textPack = `${packs} Pack`;
+                if(sisaPcs > 0) textPack += ` (+${sisaPcs} Pcs)`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.nama}</strong></td>
+                        <td>${formatRupiah(item.hargaPcs)}</td>
+                        <td><span class="badge badge-raw">${formatNumber(item.stokMentah)} Pcs</span></td>
+                        <td><span class="badge badge-danger">${item.stokRusak} Pcs</span></td>
+                        <td><span class="badge badge-ready">${textPack}</span></td>
+                    </tr>`;
+                selectTambah.innerHTML += `<option value="${item.id}">${item.nama}</option>`;
+            });
+        };
+
+        async function tambahStok() {
+            const idBarang = parseInt(document.getElementById('tambah-id-barang').value);
+            const qty = parseInt(document.getElementById('tambah-qty').value);
+
+            if(!idBarang || !qty || qty <= 0) {
+                alert("Harap Pilih Barang dan Masukkan Jumlah Pcs!"); return;
+            }
+
+            showLoading("Menyimpan ke Google Sheets...");
+            try {
+                await fetch(SCRIPT_URL + "?action=addStock", {
+                    method: "POST",
+                    body: JSON.stringify({ id: idBarang, qty: qty })
+                });
+
+                document.getElementById('tambah-id-barang').value = "";
+                document.getElementById('tambah-qty').value = "";
+                
+                await loadFromDatabase(); // Refresh seluruh data
+                alert("Berhasil! Stok baru telah disimpan ke Database.");
+            } catch (error) {
+                console.error(error);
+                alert("Gagal memperbarui stok di Database.");
+                hideLoading();
+            }
+        }
+
+        // =======================
+        // PEMESANAN & CETAK NOTA
+        // =======================
+        const renderFormPemesanan = () => {
+            document.getElementById('input-toko').innerHTML = daftarToko.map(toko => `<option value="${toko}">${toko}</option>`).join('');
+            document.getElementById('input-barang').innerHTML = items.map(item => `<option value="${item.id}">${item.nama}</option>`).join('');
+            updateFormOrder();
+        };
+
+        const updateFormOrder = () => {
+            const idBarang = parseInt(document.getElementById('input-barang').value);
+            const item = items.find(i => i.id === idBarang);
+            if(item) {
+                document.getElementById('info-stok').innerText = `Stok Tersedia: ${getPackTersedia(item)} Pack`;
+                document.getElementById('input-harga').value = item.hargaPcs * PCS_PER_PACK; 
+                calculateTotal();
+            }
+        };
+
+        const calculateTotal = () => {
+            const qty = parseInt(document.getElementById('input-qty').value) || 0;
+            const harga = parseInt(document.getElementById('input-harga').value) || 0;
+            document.getElementById('display-total').innerText = formatRupiah(qty * harga);
+        };
+
+        async function prosesPesanan() {
+            const idBarang = parseInt(document.getElementById('input-barang').value);
+            const toko = document.getElementById('input-toko').value;
+            const rawDate = document.getElementById('input-tanggal').value;
+            const qtyPack = parseInt(document.getElementById('input-qty').value);
+            const hargaPack = parseInt(document.getElementById('input-harga').value);
+
+            if(!rawDate || qtyPack <= 0 || hargaPack <= 0) { alert("Harap isi form pemesanan dengan benar!"); return; }
+
+            const item = items.find(i => i.id === idBarang);
+            if(qtyPack > getPackTersedia(item)) { alert("Stok tidak mencukupi!"); return; }
+
+            const totalHarga = qtyPack * hargaPack;
+
+            const payload = {
+                tanggal: rawDate,
+                toko: toko,
+                namaBarang: item.nama,
+                qtyPack: qtyPack,
+                hargaPack: hargaPack,
+                totalHarga: totalHarga
+            };
+
+            showLoading("Memproses Pesanan ke Cloud...");
+            try {
+                await fetch(SCRIPT_URL + "?action=processOrder", {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+
+                document.getElementById('input-qty').value = 1;
+                
+                // Cetak Nota
+                cetakNotaLokal(rawDate, toko, qtyPack, item.nama, hargaPack, totalHarga);
+                
+                // Refresh data background
+                await loadFromDatabase();
+            } catch (error) {
+                alert("Gagal memproses pesanan di Database.");
+                hideLoading();
+            }
+        }
+
+        function cetakNotaLokal(rawDate, toko, qtyPack, namaBarang, hargaPack, totalHarga) {
+            const tglFormatted = new Date(rawDate).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
+            document.getElementById('nota-tanggal').innerText = tglFormatted;
+            document.getElementById('nota-toko').innerText = toko;
+            document.getElementById('nota-body').innerHTML = `
+                <tr>
+                    <td style="border: 1px solid #000; padding: 10px; text-align: center;">${qtyPack} Pack</td>
+                    <td style="border: 1px solid #000; padding: 10px;">${namaBarang}</td>
+                    <td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(hargaPack)}</td>
+                    <td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(totalHarga)}</td>
+                </tr>
+            `;
+            document.getElementById('nota-total').innerText = formatRupiah(totalHarga);
+
+            document.body.classList.add('printing-nota');
+            setTimeout(() => {
+                window.print();
+                document.body.classList.remove('printing-nota');
+            }, 150);
+        }
+
+        // =======================
+        // LAPORAN & DOWNLOAD EXCEL
+        // =======================
+        const renderLaporan = () => {
+            let rekapBarang = {};
+            items.forEach(i => rekapBarang[i.nama] = { totalPack: 0, totalRp: 0 });
+
+            let rekapBulan = {};
+
+            riwayatPesanan.forEach(r => {
+                if(rekapBarang[r.namaBarang]) {
+                    rekapBarang[r.namaBarang].totalPack += r.qty;
+                    rekapBarang[r.namaBarang].totalRp += r.total;
+                }
+
+                // Bulanan
+                const dateObj = new Date(r.rawDate);
+                const stringBulanTahun = dateObj.toLocaleDateString('id-ID', {month: 'long', year: 'numeric'});
+                
+                if(!rekapBulan[stringBulanTahun]) rekapBulan[stringBulanTahun] = { totalPack: 0, totalRp: 0 };
+                rekapBulan[stringBulanTahun].totalPack += r.qty;
+                rekapBulan[stringBulanTahun].totalRp += r.total;
+            });
+
+            document.getElementById('table-laporan').innerHTML = Object.entries(rekapBarang).map(([nama, data]) => `
+                <tr>
+                    <td><strong>${nama}</strong></td>
+                    <td><span class="badge badge-info">${data.totalPack} Pack</span></td>
+                    <td>${formatNumber(data.totalPack * PCS_PER_PACK)} Pcs</td>
+                    <td style="font-weight:bold; color:var(--success-color);">${formatRupiah(data.totalRp)}</td>
+                </tr>`).join('');
+
+            const tbodyBulanan = document.getElementById('table-laporan-bulanan');
+            if(Object.keys(rekapBulan).length === 0) {
+                tbodyBulanan.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#999;">Belum ada data penjualan.</td></tr>`;
+            } else {
+                tbodyBulanan.innerHTML = Object.entries(rekapBulan).map(([bulan, data]) => `
+                    <tr>
+                        <td><strong>${bulan}</strong></td>
+                        <td>${formatNumber(data.totalPack)} Pack</td>
+                        <td style="font-weight:bold; color:var(--success-color);">${formatRupiah(data.totalRp)}</td>
+                    </tr>`).join('');
+            }
+        };
+
+        const cetakLaporan = () => {
+            document.body.classList.add('printing-laporan');
+            setTimeout(() => { window.print(); document.body.classList.remove('printing-laporan'); }, 150);
+        };
+
+        const downloadExcel = () => {
+            if(riwayatPesanan.length === 0) { alert("Belum ada data transaksi."); return; }
+
+            let csvContent = "Tanggal Transaksi,Nama Pembeli (Toko),Nama Barang,Jumlah (Pack),Harga per Pack,Total Harga\n";
+            
+            riwayatPesanan.forEach(r => {
+                // Escaping strings untuk Excel format
+                let tgl = `"${r.tgl}"`;
+                let toko = `"${r.toko}"`;
+                let barang = `"${r.namaBarang}"`;
+                csvContent += `${tgl},${toko},${barang},${r.qty},${r.harga},${r.total}\n`;
+            });
+
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Laporan_Rinci_Penjualan.csv";
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        // =======================
+        // MASTER RENDER & NAVIGATION
+        // =======================
+        const updateAllViews = () => {
+            renderStok();
+            renderFormPemesanan();
+            renderDashboard();
+            renderLaporan();
+        };
+
+        const switchTab = (tab) => {
+            const tabs = ['dashboard', 'stok', 'pemesanan', 'laporan'];
+            tabs.forEach(t => {
+                document.getElementById(`nav-${t}`).classList.remove('active');
+                document.getElementById(`page-${t}`).classList.add('hidden');
+            });
+            document.getElementById(`nav-${tab}`).classList.add('active');
+            document.getElementById(`page-${tab}`).classList.remove('hidden');
+
+            const titles = { 'dashboard': 'Dashboard Analitik', 'stok': 'Manajemen Stok Barang', 'pemesanan': 'Pemesanan Barang (Per Pack)', 'laporan': 'Laporan Keuangan & Penjualan' };
+            document.getElementById('page-title').innerText = titles[tab];
+        };
+
+        // INIT LOAD CLOUD DB
+        window.onload = () => {
+            loadFromDatabase();
+        };
+    </script>
+</body>
+</html>
