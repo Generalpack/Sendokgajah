@@ -19,7 +19,7 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-color); display: flex; min-height: 100vh; }
+        body { background-color: var(--bg-color); display: flex; min-height: 100vh; overflow-x: hidden; }
 
         /* Loading Overlay */
         #loading-overlay {
@@ -31,17 +31,23 @@
         .spinner { font-size: 40px; margin-bottom: 15px; color: var(--accent-color); }
 
         /* Sidebar Styles */
-        .sidebar { width: 250px; background-color: var(--primary-color); color: white; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar { width: 250px; background-color: var(--primary-color); color: white; display: flex; flex-direction: column; flex-shrink: 0; z-index: 1000; transition: left 0.3s ease; }
         .sidebar-header { padding: 20px; text-align: center; font-size: 24px; font-weight: bold; background-color: #1a252f; border-bottom: 1px solid var(--secondary-color); }
-        .sidebar-menu { list-style: none; padding: 20px 0; }
+        .sidebar-menu { list-style: none; padding: 20px 0; margin: 0; }
         .sidebar-menu li { padding: 15px 25px; transition: 0.3s; cursor: pointer; }
         .sidebar-menu li:hover, .sidebar-menu li.active { background-color: var(--accent-color); }
         .sidebar-menu li i { margin-right: 10px; width: 20px; text-align: center; }
 
+        /* Sidebar Overlay (Mobile) */
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
+
         /* Main Content Styles */
-        .main-content { flex: 1; padding: 20px 40px; overflow-y: auto; position: relative; }
+        .main-content { flex: 1; padding: 20px 40px; overflow-y: auto; position: relative; width: 100%; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .header h1 { color: var(--text-color); font-size: 28px; }
+        .header h1 { color: var(--text-color); font-size: 28px; display: flex; align-items: center; }
+        
+        .menu-toggle { display: none; font-size: 24px; cursor: pointer; margin-right: 15px; color: var(--primary-color); }
+        
         .user-profile { display: flex; align-items: center; gap: 10px; }
 
         /* Dashboard Cards */
@@ -55,11 +61,11 @@
 
         /* Layouting & Cards */
         .card-container { background-color: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; overflow-x: auto; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #eee; flex-wrap: wrap; gap: 10px; }
         .section-header h2 { font-size: 18px; color: var(--text-color); }
 
         /* Table Styles */
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #f8f9fa; color: var(--secondary-color); font-weight: 600; }
         tr:hover { background-color: #f1f2f6; }
@@ -79,10 +85,12 @@
         .form-control:focus { outline: none; border-color: var(--accent-color); }
         .info-text { font-size: 12px; color: #7f8c8d; margin-top: 5px; display: block; }
         
-        .btn { background-color: var(--accent-color); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn { background-color: var(--accent-color); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; justify-content: center;}
         .btn:hover { background-color: #2980b9; }
         .btn-success { background-color: var(--success-color); }
         .btn-success:hover { background-color: #27ae60; }
+        .btn-warning { background-color: var(--warning-color); color: #333; }
+        .btn-warning:hover { background-color: #f39c12; }
         
         .hidden { display: none !important; }
         .total-display { font-size: 24px; font-weight: bold; color: var(--secondary-color); margin-top: 10px; }
@@ -91,16 +99,39 @@
         /* Area Cetak Nota */
         #print-nota { display: none; }
         .nota-table th, .nota-table td { border: 1px solid #000; padding: 10px; }
-        .nota-table th { background-color: #fff; color: #000; }
+        .nota-table th { background-color: #f8f9fa; color: #000; font-weight: bold; }
+
+        /* MOBILE RESPONSIVE CSS */
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -250px; height: 100%; box-shadow: 2px 0 5px rgba(0,0,0,0.2); }
+            .sidebar.active { left: 0; }
+            .sidebar-overlay.active { display: block; }
+            
+            .menu-toggle { display: inline-block; }
+            .main-content { padding: 15px; width: 100%; }
+            .header h1 { font-size: 22px; }
+            .user-profile span { display: none; }
+            
+            .form-grid { grid-template-columns: 1fr; }
+            .add-stock-box > div { flex-direction: column; align-items: stretch !important; }
+            .add-stock-box > div > div { width: 100% !important; margin-bottom: 10px; }
+        }
 
         /* CSS KHUSUS PRINTING */
         @media print {
-            body.printing-nota .sidebar, body.printing-nota .main-content, body.printing-nota #loading-overlay { display: none !important; }
-            body.printing-laporan .sidebar, body.printing-laporan .header, body.printing-laporan #loading-overlay { display: none !important; }
-            body.printing-laporan .main-content { padding: 0; }
-            body.printing-laporan #page-dashboard, body.printing-laporan #page-stok, body.printing-laporan #page-pemesanan { display: none !important; }
-            
-            body.printing-nota #print-nota { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 30px; font-family: 'Courier New', Courier, monospace; background: white; color: black; }
+            body * { visibility: hidden; }
+            #print-nota, #print-nota * { visibility: visible; }
+            #print-nota {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                background: white;
+                color: black;
+            }
         }
     </style>
 </head>
@@ -111,7 +142,9 @@
         <span id="loading-text">Sinkronisasi Database Cloud...</span>
     </div>
 
-    <div class="sidebar">
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <i class="fas fa-utensils"></i> Sendok Gajah
         </div>
@@ -126,25 +159,28 @@
 
     <div class="main-content">
         <div class="header">
-            <h1 id="page-title">Dashboard Analitik</h1>
+            <h1>
+                <i class="fas fa-bars menu-toggle" onclick="toggleSidebar()"></i>
+                <span id="page-title">Dashboard Analitik</span>
+            </h1>
             <div class="user-profile">
                 <i class="fas fa-cloud fa-2x" style="color: var(--success-color);"></i>
-                <span>Database Terhubung</span>
+                <span>DB Terhubung</span>
             </div>
         </div>
 
         <div id="page-dashboard">
-            <div class="cards-grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="cards-grid">
                 <div class="dashboard-card warning">
                     <div class="card-info">
-                        <h3>Total Penjualan Keseluruhan</h3>
+                        <h3>Total Penjualan</h3>
                         <h2 id="dash-terjual">0 Pack</h2>
                     </div>
                     <div class="card-icon"><i class="fas fa-shopping-cart"></i></div>
                 </div>
                 <div class="dashboard-card success">
                     <div class="card-info">
-                        <h3>Total Pendapatan Keseluruhan</h3>
+                        <h3>Total Pendapatan</h3>
                         <h2 id="dash-pendapatan">Rp 0</h2>
                     </div>
                     <div class="card-icon"><i class="fas fa-wallet"></i></div>
@@ -158,40 +194,42 @@
 
             <div class="card-container">
                 <div class="section-header">
-                    <h2>Riwayat Transaksi Terakhir (Pemesanan)</h2>
+                    <h2>Riwayat Transaksi Terakhir</h2>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tanggal</th>
-                            <th>Nama Toko</th>
-                            <th>Barang</th>
-                            <th>Total Pembelian</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-dash-riwayat"></tbody>
-                </table>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Nama Toko</th>
+                                <th>Barang</th>
+                                <th>Total Pembelian</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-dash-riwayat"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div id="page-stok" class="hidden">
             <div class="add-stock-box">
                 <h3 style="margin-bottom: 15px; font-size: 16px;"><i class="fas fa-plus-circle"></i> Tambah Stok Masuk</h3>
-                <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div style="display: flex; gap: 15px; align-items: flex-end;">
                     <div style="width: 150px;">
                         <label class="info-text" style="font-weight: bold; margin-bottom: 5px;">Tanggal Masuk</label>
                         <input type="date" id="tambah-tanggal" class="form-control">
                     </div>
-                    <div style="flex: 1; min-width: 200px;">
+                    <div style="flex: 1; min-width: 180px;">
                         <label class="info-text" style="font-weight: bold; margin-bottom: 5px;">Pilih Barang</label>
                         <select id="tambah-id-barang" class="form-control"></select>
                     </div>
-                    <div style="width: 150px;">
+                    <div style="width: 120px;">
                         <label class="info-text" style="font-weight: bold; margin-bottom: 5px;">Jumlah (Pcs)</label>
                         <input type="number" id="tambah-qty" class="form-control" min="1" placeholder="0">
                     </div>
                     <div>
-                        <button class="btn" onclick="tambahStok()"><i class="fas fa-cloud-upload-alt"></i> Update Cloud</button>
+                        <button class="btn" onclick="tambahStok()"><i class="fas fa-cloud-upload-alt"></i> Simpan Stok</button>
                     </div>
                 </div>
             </div>
@@ -200,18 +238,20 @@
                 <div class="section-header">
                     <h2>Data Inventaris Gudang</h2>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Jenis Barang</th>
-                            <th>Harga Default/Pcs</th>
-                            <th>Stok Mentah</th>
-                            <th>Stok Rusak</th>
-                            <th>Stok Jadi (Pack)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-stok"></tbody>
-                </table>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Jenis Barang</th>
+                                <th>Stok Mentah</th>
+                                <th>Stok Rusak</th>
+                                <th>Stok Jadi (Pack)</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-stok"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -261,65 +301,74 @@
         <div id="page-laporan" class="hidden">
             <div class="card-container">
                 <div class="section-header">
-                    <h2>Rekap Laporan Penjualan per Barang</h2>
+                    <h2>Rekap Laporan per Barang</h2>
                     <button class="btn" onclick="cetakLaporan()"><i class="fas fa-print"></i> Cetak Laporan (PDF)</button>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nama Barang</th>
-                            <th>Total Pack Terjual</th>
-                            <th>Estimasi PCS Terjual</th>
-                            <th>Total Pendapatan</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-laporan"></tbody>
-                </table>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Barang</th>
+                                <th>Total Pack Terjual</th>
+                                <th>Estimasi PCS Terjual</th>
+                                <th>Total Pendapatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-laporan"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="card-container">
                 <div class="section-header">
-                    <h2>Laporan Transaksi Penjualan Bulanan</h2>
-                    <button class="btn btn-success" onclick="downloadExcel()"><i class="fas fa-file-excel"></i> Download Rincian Excel</button>
+                    <h2>Laporan Penjualan Bulanan</h2>
+                    <button class="btn btn-success" onclick="downloadExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Bulan & Tahun</th>
-                            <th>Total Penjualan (Pack)</th>
-                            <th>Total Pendapatan</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-laporan-bulanan"></tbody>
-                </table>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Bulan & Tahun</th>
+                                <th>Total Penjualan (Pack)</th>
+                                <th>Total Pendapatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-laporan-bulanan"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="print-nota">
-        <div style="text-align: right; margin-bottom: 20px; line-height: 1.5;">
-            <p id="nota-tanggal" style="font-size: 16px; margin: 0;"></p>
-            <p id="nota-toko" style="font-size: 20px; font-weight: bold; margin: 0;"></p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 20px;">
+            <div style="flex: 1;">
+                <h2 style="margin: 0; font-size: 26px; padding-top: 10px;">NOTA PEMESANAN</h2>
+            </div>
+            <div style="text-align: right; flex: 1;">
+                <img src="logo.jpg" alt="Logo Sendok Gajah" style="max-width: 100px; height: auto; margin-bottom: 8px;">
+                <p id="nota-tanggal" style="font-size: 14px; margin: 0; color: #555;"></p>
+                <p id="nota-toko" style="font-size: 18px; font-weight: bold; margin: 4px 0 0 0;"></p>
+            </div>
         </div>
-        <h2 style="text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #000; padding-bottom: 10px; font-size: 24px;">NOTA PEMESANAN</h2>
         
-        <table class="nota-table" style="width: 100%; border-collapse: collapse;">
+        <table class="nota-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
             <thead>
                 <tr>
-                    <th style="border: 1px solid #000; padding: 10px; text-align: center;">Banyaknya</th>
-                    <th style="border: 1px solid #000; padding: 10px; text-align: left;">Nama Barang</th>
-                    <th style="border: 1px solid #000; padding: 10px; text-align: right;">Harga (@Pack)</th>
-                    <th style="border: 1px solid #000; padding: 10px; text-align: right;">Jumlah Harga</th>
+                    <th style="text-align: center; width: 15%;">Banyaknya</th>
+                    <th style="text-align: left; width: 40%;">Nama Barang</th>
+                    <th style="text-align: right; width: 20%;">Harga (@Pack)</th>
+                    <th style="text-align: right; width: 25%;">Jumlah Harga</th>
                 </tr>
             </thead>
             <tbody id="nota-body"></tbody>
         </table>
         
-        <div style="text-align: right; margin-top: 20px; font-size: 20px; font-weight: bold; border-top: 2px dashed #000; padding-top: 10px;">
+        <div style="text-align: right; font-size: 20px; font-weight: bold; padding-top: 10px;">
             Total: <span id="nota-total"></span>
         </div>
-        <div style="text-align: center; margin-top: 50px; font-size: 14px; font-style: italic;">
-            Terima kasih atas pesanan Anda. Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.
+        <div style="text-align: center; margin-top: 40px; font-size: 12px; font-style: italic; color: #666;">
+            Terima kasih atas pesanan Anda.<br>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.
         </div>
     </div>
 
@@ -343,30 +392,26 @@
         };
         const hideLoading = () => { document.getElementById('loading-overlay').style.display = 'none'; };
 
+        // Toggle Sidebar for Mobile
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('sidebar-overlay').classList.toggle('active');
+        }
+
         // =======================
-        // FUNGSI KOMUNIKASI DATABASE (DIPERBARUI UNTUK MENCEGAH ERROR CORS)
+        // FETCH DATA
         // =======================
         async function loadFromDatabase() {
             showLoading("Mengambil Data dari Google Sheets...");
             try {
                 let response = await fetch(SCRIPT_URL + "?action=getInitialData", { 
-                    method: "POST",
-                    redirect: "follow",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({}) 
+                    method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({}) 
                 });
-                
                 if (!response.ok) throw new Error("Gagal terhubung ke server");
-                
                 let data = await response.json();
 
-                // Mapping data Barang
                 items = data.items.map(r => ({ id: r[0], nama: r[1], hargaPcs: r[2], stokMentah: r[3], stokRusak: r[4] }));
-                
-                // Mapping data Toko
                 daftarToko = data.stores;
-                
-                // Mapping data Pesanan (di-reverse agar yang terbaru di atas)
                 riwayatPesanan = data.orders.map(r => ({
                     rawDate: r[0], 
                     tgl: new Date(r[0]).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'}),
@@ -377,7 +422,7 @@
                 updateAllViews();
             } catch (error) {
                 console.error("Detail Error:", error);
-                alert("Koneksi Error! Pastikan pengaturan Deploy Google Script diset 'Who has access: Anyone'.");
+                alert("Koneksi Error! Pastikan Google Script Anda benar.");
             } finally {
                 hideLoading();
             }
@@ -400,12 +445,17 @@
                 let textPack = `${formatNumber(packs)} Pack`;
                 if(sisaPcs > 0) textPack += ` <span style="font-size:12px; font-weight:normal;">(+${sisaPcs} Pcs)</span>`;
 
+                // Logika Peringatan Warna Merah Jika Stok Mentah < 2700
+                let warningColor = i.stokMentah < 2700 ? 'color: var(--danger-color);' : 'color: var(--text-color);';
+
                 return `
                 <div class="dashboard-card" style="align-items: flex-start; border-top: 4px solid var(--accent-color);">
                     <div class="card-info" style="flex:1;">
-                        <h3 style="color: var(--secondary-color); font-size: 13px; margin-bottom: 8px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${i.nama}">${i.nama}</h3>
+                        <h3 style="color: var(--secondary-color); font-size: 14px; margin-bottom: 8px;">${i.nama}</h3>
                         <h2 style="font-size: 22px; color: var(--accent-color);">${textPack}</h2>
-                        <span style="font-size: 11px; color: #7f8c8d; display:block; margin-top:8px;">Mentah: <strong>${formatNumber(i.stokMentah)}</strong> Pcs | Rusak: <strong>${i.stokRusak}</strong></span>
+                        <span style="font-size: 12px; display:block; margin-top:8px;">
+                            Mentah: <strong style="${warningColor}">${formatNumber(i.stokMentah)}</strong> Pcs | Rusak: <strong>${i.stokRusak}</strong>
+                        </span>
                     </div>
                     <div class="card-icon" style="font-size:24px; margin-left: 10px;"><i class="fas fa-box"></i></div>
                 </div>`;
@@ -423,9 +473,10 @@
         };
 
         // =======================
-        // STOK BARANG
+        // STOK BARANG & EDIT RUSAK
         // =======================
         const renderStok = () => {
+            document.getElementById('tambah-tanggal').value = new Date().toISOString().split('T')[0];
             const tbody = document.getElementById('table-stok');
             const selectTambah = document.getElementById('tambah-id-barang');
             
@@ -441,10 +492,14 @@
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${item.nama}</strong></td>
-                        <td>${formatRupiah(item.hargaPcs)}</td>
                         <td><span class="badge badge-raw">${formatNumber(item.stokMentah)} Pcs</span></td>
-                        <td><span class="badge badge-danger">${item.stokRusak} Pcs</span></td>
+                        <td><span class="badge badge-danger">${formatNumber(item.stokRusak)} Pcs</span></td>
                         <td><span class="badge badge-ready">${textPack}</span></td>
+                        <td>
+                            <button class="btn btn-warning" style="padding: 5px 10px; font-size:12px;" onclick="editStokRusak(${item.id})">
+                                <i class="fas fa-edit"></i> Edit Rusak
+                            </button>
+                        </td>
                     </tr>`;
                 selectTambah.innerHTML += `<option value="${item.id}">${item.nama}</option>`;
             });
@@ -462,21 +517,40 @@
             showLoading("Menyimpan ke Google Sheets...");
             try {
                 await fetch(SCRIPT_URL + "?action=addStock", {
-                    method: "POST",
-                    redirect: "follow",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ id: idBarang, qty: qty })
                 });
-
                 document.getElementById('tambah-id-barang').value = "";
                 document.getElementById('tambah-qty').value = "";
-                
-                await loadFromDatabase(); // Refresh seluruh data
-                alert("Berhasil! Stok baru telah disimpan ke Database.");
+                await loadFromDatabase();
+                alert("Berhasil! Stok baru telah disimpan.");
             } catch (error) {
-                console.error(error);
                 alert("Gagal memperbarui stok di Database.");
                 hideLoading();
+            }
+        }
+
+        // FITUR BARU: Edit Stok Rusak
+        async function editStokRusak(idBarang) {
+            const item = items.find(i => i.id === idBarang);
+            let input = prompt(`Edit Stok Rusak untuk:\n${item.nama}\n\nMasukkan jumlah Pcs rusak yang baru:`, item.stokRusak);
+            
+            if (input !== null && input !== "") {
+                let newRusak = parseInt(input);
+                if (isNaN(newRusak) || newRusak < 0) { alert("Angka tidak valid!"); return; }
+                
+                showLoading("Update Stok Rusak ke Cloud...");
+                try {
+                    await fetch(SCRIPT_URL + "?action=editRusak", {
+                        method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({ id: idBarang, rusak: newRusak })
+                    });
+                    await loadFromDatabase();
+                    alert("Stok Rusak dan Stok Jadi berhasil diperbarui!");
+                } catch (e) {
+                    alert("Gagal update stok rusak. Pastikan Code Apps Script sudah diperbarui.");
+                    hideLoading();
+                }
             }
         }
 
@@ -519,40 +593,26 @@
 
             const totalHarga = qtyPack * hargaPack;
 
-            const payload = {
-                tanggal: rawDate,
-                toko: toko,
-                namaBarang: item.nama,
-                qtyPack: qtyPack,
-                hargaPack: hargaPack,
-                totalHarga: totalHarga
-            };
+            const payload = { tanggal: rawDate, toko: toko, namaBarang: item.nama, qtyPack: qtyPack, hargaPack: hargaPack, totalHarga: totalHarga };
 
             showLoading("Memproses Pesanan ke Cloud...");
             try {
                 await fetch(SCRIPT_URL + "?action=processOrder", {
-                    method: "POST",
-                    redirect: "follow",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify(payload)
                 });
 
                 document.getElementById('input-qty').value = 1;
-                
-                // Cetak Nota
                 cetakNotaLokal(rawDate, toko, qtyPack, item.nama, hargaPack, totalHarga);
-                
-                // Refresh data background
                 await loadFromDatabase();
             } catch (error) {
-                console.error(error);
                 alert("Gagal memproses pesanan di Database.");
                 hideLoading();
             }
         }
 
         function cetakNotaLokal(rawDate, toko, qtyPack, namaBarang, hargaPack, totalHarga) {
-            const tglFormatted = new Date(rawDate).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
+            const tglFormatted = new Date(rawDate).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
             document.getElementById('nota-tanggal').innerText = tglFormatted;
             document.getElementById('nota-toko').innerText = toko;
             document.getElementById('nota-body').innerHTML = `
@@ -565,11 +625,12 @@
             `;
             document.getElementById('nota-total').innerText = formatRupiah(totalHarga);
 
+            // Trigger Print
             document.body.classList.add('printing-nota');
             setTimeout(() => {
                 window.print();
                 document.body.classList.remove('printing-nota');
-            }, 150);
+            }, 300);
         }
 
         // =======================
@@ -578,7 +639,6 @@
         const renderLaporan = () => {
             let rekapBarang = {};
             items.forEach(i => rekapBarang[i.nama] = { totalPack: 0, totalRp: 0 });
-
             let rekapBulan = {};
 
             riwayatPesanan.forEach(r => {
@@ -586,8 +646,6 @@
                     rekapBarang[r.namaBarang].totalPack += r.qty;
                     rekapBarang[r.namaBarang].totalRp += r.total;
                 }
-
-                // Bulanan
                 const dateObj = new Date(r.rawDate);
                 const stringBulanTahun = dateObj.toLocaleDateString('id-ID', {month: 'long', year: 'numeric'});
                 
@@ -619,19 +677,14 @@
 
         const cetakLaporan = () => {
             document.body.classList.add('printing-laporan');
-            setTimeout(() => { window.print(); document.body.classList.remove('printing-laporan'); }, 150);
+            setTimeout(() => { window.print(); document.body.classList.remove('printing-laporan'); }, 200);
         };
 
         const downloadExcel = () => {
             if(riwayatPesanan.length === 0) { alert("Belum ada data transaksi."); return; }
-
             let csvContent = "Tanggal Transaksi,Nama Pembeli (Toko),Nama Barang,Jumlah (Pack),Harga per Pack,Total Harga\n";
-            
             riwayatPesanan.forEach(r => {
-                // Escaping strings untuk Excel format
-                let tgl = `"${r.tgl}"`;
-                let toko = `"${r.toko}"`;
-                let barang = `"${r.namaBarang}"`;
+                let tgl = `"${r.tgl}"`; let toko = `"${r.toko}"`; let barang = `"${r.namaBarang}"`;
                 csvContent += `${tgl},${toko},${barang},${r.qty},${r.harga},${r.total}\n`;
             });
 
@@ -646,13 +699,10 @@
         };
 
         // =======================
-        // MASTER RENDER & NAVIGATION
+        // NAVIGATION & INIT
         // =======================
         const updateAllViews = () => {
-            renderStok();
-            renderFormPemesanan();
-            renderDashboard();
-            renderLaporan();
+            renderStok(); renderFormPemesanan(); renderDashboard(); renderLaporan();
         };
 
         const switchTab = (tab) => {
@@ -664,14 +714,15 @@
             document.getElementById(`nav-${tab}`).classList.add('active');
             document.getElementById(`page-${tab}`).classList.remove('hidden');
 
-            const titles = { 'dashboard': 'Dashboard Analitik', 'stok': 'Manajemen Stok Barang', 'pemesanan': 'Pemesanan Barang (Per Pack)', 'laporan': 'Laporan Keuangan & Penjualan' };
+            const titles = { 'dashboard': 'Dashboard Analitik', 'stok': 'Manajemen Stok Barang', 'pemesanan': 'Pemesanan Barang', 'laporan': 'Laporan Penjualan' };
             document.getElementById('page-title').innerText = titles[tab];
+            
+            // Auto close sidebar in mobile
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('sidebar-overlay').classList.remove('active');
         };
 
-        // INIT LOAD CLOUD DB
-        window.onload = () => {
-            loadFromDatabase();
-        };
+        window.onload = () => { loadFromDatabase(); };
     </script>
 </body>
 </html>
