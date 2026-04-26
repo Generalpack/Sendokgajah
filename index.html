@@ -7,21 +7,14 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #34495e;
-            --accent-color: #3498db;
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --card-bg: #ffffff;
-            --danger-color: #e74c3c;
-            --success-color: #2ecc71;
-            --warning-color: #f1c40f;
+            --primary-color: #2c3e50; --secondary-color: #34495e; --accent-color: #3498db;
+            --bg-color: #f4f7f6; --text-color: #333; --card-bg: #ffffff;
+            --danger-color: #e74c3c; --success-color: #2ecc71; --warning-color: #f1c40f;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body { background-color: var(--bg-color); display: flex; min-height: 100vh; overflow-x: hidden; }
 
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; font-size: 20px; font-weight: bold; color: var(--primary-color); }
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; font-size: 20px; font-weight: bold; color: var(--primary-color); }
         .spinner { font-size: 40px; margin-bottom: 15px; color: var(--accent-color); }
 
         .sidebar { width: 250px; background-color: var(--primary-color); color: white; display: flex; flex-direction: column; flex-shrink: 0; z-index: 1000; transition: left 0.3s ease; }
@@ -30,7 +23,6 @@
         .sidebar-menu li { padding: 15px 25px; transition: 0.3s; cursor: pointer; }
         .sidebar-menu li:hover, .sidebar-menu li.active { background-color: var(--accent-color); }
         .sidebar-menu li i { margin-right: 10px; width: 20px; text-align: center; }
-
         .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; }
 
         .main-content { flex: 1; padding: 20px 40px; overflow-y: auto; position: relative; width: 100%; }
@@ -38,6 +30,10 @@
         .header h1 { color: var(--text-color); font-size: 28px; display: flex; align-items: center; }
         .menu-toggle { display: none; font-size: 24px; cursor: pointer; margin-right: 15px; color: var(--primary-color); }
         .user-profile { display: flex; align-items: center; gap: 10px; }
+        
+        .sync-container { display: flex; flex-direction: column; align-items: flex-end; }
+        .sync-btn { background: none; border: 1px solid var(--accent-color); color: var(--accent-color); font-size: 10px; padding: 2px 5px; border-radius: 3px; cursor: pointer; margin-top: 3px; display: none; }
+        .sync-btn:hover { background: var(--accent-color); color: white; }
 
         .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .dashboard-card { background: var(--card-bg); padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -77,13 +73,14 @@
         .btn-warning:hover { background-color: #f39c12; }
         .btn-purple { background-color: #9b59b6; color: white; }
         .btn-purple:hover { background-color: #8e44ad; }
+        .btn-secondary { background-color: #95a5a6; color: white; }
+        .btn-secondary:hover { background-color: #7f8c8d; }
         
         .hidden { display: none !important; }
         .total-display { font-size: 24px; font-weight: bold; color: var(--secondary-color); margin-top: 10px; }
         .add-stock-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 20px; }
         .new-item-box { background: #fdf5e6; border: 1px dashed #f39c12; }
 
-        /* HPP Simulator Styles */
         .hpp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .hpp-box { border: 1px solid #eee; border-radius: 8px; padding: 15px; background: #fff; }
         .hpp-box h3 { border-bottom: 2px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 15px; font-size: 16px; color: var(--primary-color); }
@@ -103,7 +100,7 @@
             .menu-toggle { display: inline-block; }
             .main-content { padding: 15px; width: 100%; }
             .header h1 { font-size: 22px; }
-            .user-profile span { display: none; }
+            .user-profile span.db-text { display: none; }
             .form-grid, .hpp-grid { grid-template-columns: 1fr; }
             .add-stock-box > div { flex-direction: column; align-items: stretch !important; }
             .add-stock-box > div > div { width: 100% !important; margin-bottom: 10px; }
@@ -114,8 +111,7 @@
             body.printing-nota .sidebar, body.printing-nota .main-content, body.printing-nota #loading-overlay { display: none !important; }
             body.printing-laporan .sidebar, body.printing-laporan .header, body.printing-laporan #loading-overlay { display: none !important; }
             body.printing-laporan .main-content { padding: 0; width: 100%; }
-            body.printing-laporan #page-dashboard, body.printing-laporan #page-stok, body.printing-laporan #page-hpp, body.printing-laporan #page-pemesanan { display: none !important; }
-            
+            body.printing-laporan #page-dashboard, body.printing-laporan #page-stok, body.printing-laporan #page-hpp, body.printing-laporan #page-kalkulator, body.printing-laporan #page-pemesanan { display: none !important; }
             body.printing-nota #print-nota { display: block !important; width: 100%; font-family: 'Segoe UI', Arial, sans-serif; background: white; color: black; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
@@ -125,7 +121,7 @@
 
     <div id="loading-overlay">
         <i class="fas fa-circle-notch fa-spin spinner"></i>
-        <span id="loading-text">Sinkronisasi Database Cloud...</span>
+        <span id="loading-text">Memproses...</span>
     </div>
 
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -138,9 +134,9 @@
             <li id="nav-dashboard" class="active" onclick="switchTab('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
             <li id="nav-stok" onclick="switchTab('stok')"><i class="fas fa-box"></i> Stok Barang</li>
             <li id="nav-pemesanan" onclick="switchTab('pemesanan')"><i class="fas fa-shopping-cart"></i> Pemesanan</li>
-            <li id="nav-hpp" onclick="switchTab('hpp')"><i class="fas fa-calculator"></i> Simulasi HPP</li>
+            <li id="nav-hpp" onclick="switchTab('hpp')"><i class="fas fa-file-invoice-dollar"></i> Simulasi HPP</li>
+            <li id="nav-kalkulator" onclick="switchTab('kalkulator')"><i class="fas fa-calculator"></i> Kalkulator</li>
             <li id="nav-laporan" onclick="switchTab('laporan')"><i class="fas fa-chart-line"></i> Laporan</li>
-            <li onclick="loadFromDatabase()"><i class="fas fa-sync-alt"></i> Refresh Data</li>
         </ul>
     </div>
 
@@ -151,8 +147,12 @@
                 <span id="page-title">Dashboard Analitik</span>
             </h1>
             <div class="user-profile">
-                <i class="fas fa-cloud fa-2x" style="color: var(--success-color);"></i>
-                <span>DB Terhubung</span>
+                <div class="sync-container">
+                    <span id="sync-status" style="font-size: 11px; color: var(--accent-color); font-weight: bold;">Menghubungkan...</span>
+                    <button class="sync-btn" id="btn-reconnect" onclick="loadFromDatabase(false)">Coba Ulang</button>
+                    <span class="db-text" style="margin-top: 3px;">DB Terhubung</span>
+                </div>
+                <i class="fas fa-cloud fa-2x" id="cloud-icon" style="color: var(--success-color);"></i>
             </div>
         </div>
 
@@ -311,7 +311,6 @@
                 <div class="section-header">
                     <h2>Kalkulator Simulasi Harga Pokok Penjualan (HPP) / Pack</h2>
                 </div>
-                
                 <div class="hpp-grid">
                     <div>
                         <div class="hpp-box" style="margin-bottom: 20px;">
@@ -323,7 +322,7 @@
                             <div class="form-group">
                                 <label>Ubah Harga Pokok (Rp/Pcs)</label>
                                 <input type="number" id="hpp-harga-pokok-custom" class="form-control" onchange="hitungHpp()" onkeyup="hitungHpp()">
-                                <span class="info-text">Ubah angka ini jika harga pasar sendok mentah berubah.</span>
+                                <span class="info-text">Harga default otomatis diambil dari Google Sheet HPP.</span>
                             </div>
                             <div class="form-group">
                                 <label>Jumlah Pcs / Pack (Isi per Pack)</label>
@@ -333,9 +332,10 @@
 
                         <div class="hpp-box">
                             <h3>2. Komponen Tambahan</h3>
-                            <span class="info-text" style="margin-bottom: 10px; display:block;">Centang dan ubah harga jika komponen digunakan:</span>
+                            <span class="info-text" style="margin-bottom: 10px; display:block;">Pilih komponen tambahan sesuai kebutuhan:</span>
                             <div id="hpp-komponen-tambahan">
-                                </div>
+                                <p style="font-size: 13px; color: #7f8c8d;">Memuat data komponen dari Sheet HPP...</p>
+                            </div>
                         </div>
                     </div>
 
@@ -350,9 +350,42 @@
 
                         <div class="hpp-box" style="margin-top: 20px;">
                             <h3>Rincian Perhitungan</h3>
-                            <div id="hpp-rincian-teks" style="font-family: monospace; font-size: 13px; line-height: 1.6;">
-                                </div>
+                            <div id="hpp-rincian-teks" style="font-family: monospace; font-size: 13px; line-height: 1.6;">-</div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-kalkulator" class="hidden">
+            <div class="card-container">
+                <div class="section-header">
+                    <h2>Kalkulator Standar</h2>
+                </div>
+                <div class="calculator" style="max-width: 350px; margin: 0 auto; background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                    <input type="text" id="calc-display" disabled style="width: 100%; height: 50px; font-size: 24px; text-align: right; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; padding: 10px; background: #fdfdfd; color: #333;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                        <button class="btn btn-warning" onclick="calcClear()">C</button>
+                        <button class="btn btn-secondary" onclick="calcInput('/')">/</button>
+                        <button class="btn btn-secondary" onclick="calcInput('*')">x</button>
+                        <button class="btn btn-secondary" onclick="calcInput('-')">-</button>
+                        
+                        <button class="btn" style="background:#ecf0f1; color:#333;" onclick="calcInput('7')">7</button>
+                        <button class="btn" style="background:#ecf0f1; color:#333;" onclick="calcInput('8')">8</button>
+                        <button class="btn" style="background:#ecf0f1; color:#333;" onclick="calcInput('9')">9</button>
+                        <button class="btn btn-secondary" onclick="calcInput('+')" style="grid-row: span 2; height: 100%;">+</button>
+                        
+                        <button class="btn" style="background:#ecf0f1; color:#333;" onclick="calcInput('4')">4</button>
+                        <button class="btn" style="background:#ecf0f1; color:#333;" onclick="calcInput('5')">5</button>
+                        <button class="btn" style="background:#ecf0f1; color:#333;" onclick="calcInput('6')">6</button>
+                        
+                        <button class="btn" style="background:#ecf0f1; color:#333;" onclick="calcInput('1')">1</button>
+                        <button class="btn" style="background:#ecf0f1; color:#333;" onclick="calcInput('2')">2</button>
+                        <button class="btn" style="background:#ecf0f1; color:#333;" onclick="calcInput('3')">3</button>
+                        <button class="btn btn-success" onclick="calcCalculate()" style="grid-row: span 2; height: 100%;">=</button>
+                        
+                        <button class="btn" style="background:#ecf0f1; color:#333; grid-column: span 2;" onclick="calcInput('0')">0</button>
+                        <button class="btn" style="background:#ecf0f1; color:#333;" onclick="calcInput('.')">.</button>
                     </div>
                 </div>
             </div>
@@ -401,114 +434,145 @@
     </div>
 
     <div id="print-nota">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 20px;">
-            <div style="flex: 1;">
-                <h2 style="margin: 0; font-size: 26px; padding-top: 10px;">NOTA PEMESANAN</h2>
+        <div class="nota-half">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 20px;">
+                <div style="flex: 1; text-align: left;">
+                    <img src="logo.jpg" alt="Logo Sendok Gajah" style="max-width: 120px; height: auto;">
+                </div>
+                <div style="flex: 2; text-align: center;">
+                    <h2 style="margin: 0; font-size: 26px;">NOTA PEMESANAN</h2>
+                </div>
+                <div style="flex: 1; text-align: right;">
+                    <p class="nota-tanggal" style="font-size: 14px; margin: 0; color: #555;"></p>
+                    <p class="nota-toko" style="font-size: 18px; font-weight: bold; margin: 4px 0 0 0;"></p>
+                </div>
             </div>
-            <div style="text-align: right; flex: 1;">
-                <img src="logo.jpg" alt="Logo Sendok Gajah" style="max-width: 120px; height: auto; margin-bottom: 8px; display: inline-block;">
-                <p id="nota-tanggal" style="font-size: 14px; margin: 0; color: #555;"></p>
-                <p id="nota-toko" style="font-size: 18px; font-weight: bold; margin: 4px 0 0 0;"></p>
+            <table class="nota-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                    <tr>
+                        <th style="text-align: center; width: 15%;">Banyaknya</th>
+                        <th style="text-align: left; width: 40%;">Nama Barang</th>
+                        <th style="text-align: right; width: 20%;">Harga (@Pack)</th>
+                        <th style="text-align: right; width: 25%;">Jumlah Harga</th>
+                    </tr>
+                </thead>
+                <tbody class="nota-body"></tbody>
+            </table>
+            <div style="text-align: right; font-size: 20px; font-weight: bold; padding-top: 10px;"> Total: <span class="nota-total"></span> </div>
+            <div style="text-align: center; margin-top: 30px; font-size: 12px; font-style: italic; color: #666;">
+                Terima kasih atas pesanan Anda.<br>Lembar 1: Untuk Pembeli (Barang yang sudah dibeli tidak dapat ditukar)
             </div>
         </div>
-        
-        <table class="nota-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <thead>
-                <tr>
-                    <th style="text-align: center; width: 15%;">Banyaknya</th>
-                    <th style="text-align: left; width: 40%;">Nama Barang</th>
-                    <th style="text-align: right; width: 20%;">Harga (@Pack)</th>
-                    <th style="text-align: right; width: 25%;">Jumlah Harga</th>
-                </tr>
-            </thead>
-            <tbody id="nota-body"></tbody>
-        </table>
-        
-        <div style="text-align: right; font-size: 20px; font-weight: bold; padding-top: 10px;">
-            Total: <span id="nota-total"></span>
+
+        <div style="border-top: 1px dashed #999; margin: 40px 0; text-align: center; position: relative;">
+            <span style="background: white; padding: 0 15px; color: #999; font-size: 12px; position: relative; top: -9px;">
+                <i class="fas fa-cut"></i> Gunting di sini
+            </span>
         </div>
-        <div style="text-align: center; margin-top: 40px; font-size: 12px; font-style: italic; color: #666;">
-            Terima kasih atas pesanan Anda.<br>Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.
+
+        <div class="nota-half">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 20px;">
+                <div style="flex: 1; text-align: left;">
+                    <img src="logo.jpg" alt="Logo Sendok Gajah" style="max-width: 120px; height: auto;">
+                </div>
+                <div style="flex: 2; text-align: center;">
+                    <h2 style="margin: 0; font-size: 26px;">NOTA PEMESANAN</h2>
+                </div>
+                <div style="flex: 1; text-align: right;">
+                    <p class="nota-tanggal" style="font-size: 14px; margin: 0; color: #555;"></p>
+                    <p class="nota-toko" style="font-size: 18px; font-weight: bold; margin: 4px 0 0 0;"></p>
+                </div>
+            </div>
+            <table class="nota-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                    <tr>
+                        <th style="text-align: center; width: 15%;">Banyaknya</th>
+                        <th style="text-align: left; width: 40%;">Nama Barang</th>
+                        <th style="text-align: right; width: 20%;">Harga (@Pack)</th>
+                        <th style="text-align: right; width: 25%;">Jumlah Harga</th>
+                    </tr>
+                </thead>
+                <tbody class="nota-body"></tbody>
+            </table>
+            <div style="text-align: right; font-size: 20px; font-weight: bold; padding-top: 10px;"> Total: <span class="nota-total"></span> </div>
+            <div style="text-align: center; margin-top: 30px; font-size: 12px; font-style: italic; color: #666;">
+                Terima kasih atas pesanan Anda.<br>Lembar 2: Untuk Arsip Penjual
+            </div>
         </div>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbylcZnvkcxxILK0rnQvbA2z-FpkLixP2VekqkBlg9kKyvQU1THCs12AKZ1SP12e9ViaPQ/exec";
+        // MASUKKAN URL BARU SETELAH MEMBUAT "NEW DEPLOYMENT"
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwS6KLXz1LeiOaX2XxaNpLBAWRlBNEEQkXi1L44pMnqnLHIjqEGjCYP5s59g4xSBE9C6A/exec";
         
         let items = [];
         let daftarToko = [];
         let riwayatPesanan = [];
-        
-        // Data Default Barang Pokok (Sesuai Excel)
-        let hppBarangPokok = [
-            { nama: "SENDOK NOBU BENING", harga: 110 },
-            { nama: "SENDOK NOBU PUTIH", harga: 94 },
-            { nama: "GARPU BENING", harga: 128 },
-            { nama: "GARPU PUTIH", harga: 106 }
-        ];
-
-        // Data Default Komponen Tambahan HPP (Sesuai Excel)
-        let hppKomponen = [
-            { nama: "TISSUE", harga: 17.875, tipe: "per_pcs" },
-            { nama: "PLASTIK PEREKAT", harga: 18.5, tipe: "per_pcs" },
-            { nama: "TUSUK GIGI", harga: 19.5, tipe: "per_pcs" },
-            { nama: "PLASTIK PACKING KECIL", harga: 172.22, tipe: "per_pack" },
-            { nama: "PLASTIK PACKING BESAR", harga: 350, tipe: "per_pack" },
-            { nama: "KARUNG", harga: 2700, tipe: "per_pack" },
-            { nama: "LABEL KECIL", harga: 25, tipe: "per_pack" },
-            { nama: "LABEL BESAR", harga: 50, tipe: "per_pack" },
-            { nama: "UPAH KECIL", harga: 833.33, tipe: "per_pack" },
-            { nama: "UPAH BESAR", harga: 833.33, tipe: "per_pack" }
-        ];
+        let hppBarangPokok = [];
+        let hppKomponen = [];
 
         const PCS_PER_PACK = 50;
-
         const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
         const formatNumber = (angka) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(angka);
         const getPackTersedia = (item) => Math.floor((item.stokMentah - item.stokRusak) / PCS_PER_PACK);
         
-        const showLoading = (text) => { 
-            document.getElementById('loading-text').innerText = text; 
-            document.getElementById('loading-overlay').style.display = 'flex'; 
-        };
+        const showLoading = (text) => { document.getElementById('loading-text').innerText = text; document.getElementById('loading-overlay').style.display = 'flex'; };
         const hideLoading = () => { document.getElementById('loading-overlay').style.display = 'none'; };
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('sidebar-overlay').classList.toggle('active');
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('sidebar-overlay').classList.toggle('active'); }
+
+        function showConnectionError(msg) {
+            const status = document.getElementById('sync-status');
+            const btn = document.getElementById('btn-reconnect');
+            const icon = document.getElementById('cloud-icon');
+            status.innerText = "Koneksi Terputus"; status.style.color = "var(--danger-color)";
+            icon.style.color = "var(--danger-color)"; btn.style.display = "inline-block";
+            console.error("APP ERROR:", msg);
         }
 
-        // =======================
-        // FETCH DATA 
-        // =======================
-        async function loadFromDatabase() {
-            showLoading("Mengambil Data dari Google Sheets...");
+        async function loadFromDatabase(isBackground = false) {
+            const syncStatus = document.getElementById('sync-status');
+            const btn = document.getElementById('btn-reconnect');
+            const icon = document.getElementById('cloud-icon');
+            
+            if (!isBackground) showLoading("Menyimpan ke Cloud...");
+            else { syncStatus.innerText = "Sinkronisasi..."; syncStatus.style.color = "var(--warning-color)"; }
+            
+            btn.style.display = "none"; icon.style.color = "var(--warning-color)";
+
             try {
                 let response = await fetch(SCRIPT_URL + "?action=getInitialData", { 
                     method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({}) 
                 });
-                if (!response.ok) throw new Error("Gagal terhubung");
-                let data = await response.json();
+                
+                if (!response.ok) throw new Error("Gagal HTTP Request");
+                
+                let text = await response.text();
+                let data;
+                try { data = JSON.parse(text); } 
+                catch(e) { throw new Error("Format salah. Pastikan sudah klik 'New Version' saat deploy Apps Script."); }
+
+                if(data.error) throw new Error(data.message);
 
                 items = data.items.map(r => ({ id: r[0], nama: r[1], hargaPcs: r[2], stokMentah: r[3], stokRusak: r[4] }));
                 daftarToko = data.stores;
-                riwayatPesanan = data.orders.map(r => ({
-                    rawDate: r[0], 
-                    tgl: new Date(r[0]).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'}),
-                    toko: r[1], namaBarang: r[2], qty: r[3], harga: r[4], total: r[5]
-                })).reverse();
+                riwayatPesanan = data.orders.map(r => ({ rawDate: r[0], tgl: new Date(r[0]).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'}), toko: r[1], namaBarang: r[2], qty: r[3], harga: r[4], total: r[5] })).reverse();
+                
+                if(data.hppPokok && data.hppPokok.length > 0) hppBarangPokok = data.hppPokok;
+                if(data.hppKomp && data.hppKomp.length > 0) hppKomponen = data.hppKomp;
 
-                document.getElementById('input-tanggal').value = new Date().toISOString().split('T')[0];
+                if (!document.getElementById('input-tanggal').value) document.getElementById('input-tanggal').value = new Date().toISOString().split('T')[0];
+                
                 updateAllViews();
+                
+                syncStatus.innerText = "Real-time Aktif"; syncStatus.style.color = "var(--success-color)"; icon.style.color = "var(--success-color)";
             } catch (error) {
-                console.error(error); alert("Koneksi Error! Pastikan Script dideploy 'Anyone'.");
+                showConnectionError(error.message);
+                if(!isBackground) alert("Koneksi Error!\nPastikan sudah melakukan DEPLOY > NEW VERSION di Apps Script.");
             } finally {
-                hideLoading();
+                if (!isBackground) hideLoading();
             }
         }
 
-        // =======================
-        // DASHBOARD
-        // =======================
         const renderDashboard = () => {
             let totalTerjual = 0; let totalPendapatan = 0;
             riwayatPesanan.forEach(r => { totalTerjual += r.qty; totalPendapatan += r.total; });
@@ -523,14 +587,11 @@
                 if(sisaPcs > 0) textPack += ` <span style="font-size:12px; font-weight:normal;">(+${sisaPcs} Pcs)</span>`;
                 let warningColor = i.stokMentah < 2700 ? 'color: var(--danger-color);' : 'color: var(--text-color);';
 
-                return `
-                <div class="dashboard-card" style="align-items: flex-start; border-top: 4px solid var(--accent-color);">
+                return `<div class="dashboard-card" style="align-items: flex-start; border-top: 4px solid var(--accent-color);">
                     <div class="card-info" style="flex:1;">
                         <h3 style="color: var(--secondary-color); font-size: 14px; margin-bottom: 8px;">${i.nama}</h3>
                         <h2 style="font-size: 22px; color: var(--accent-color);">${textPack}</h2>
-                        <span style="font-size: 12px; display:block; margin-top:8px;">
-                            Mentah: <strong style="${warningColor}">${formatNumber(i.stokMentah)}</strong> Pcs | Rusak: <strong>${i.stokRusak}</strong>
-                        </span>
+                        <span style="font-size: 12px; display:block; margin-top:8px;">Mentah: <strong style="${warningColor}">${formatNumber(i.stokMentah)}</strong> Pcs | Rusak: <strong>${i.stokRusak}</strong></span>
                     </div>
                     <div class="card-icon" style="font-size:24px; margin-left: 10px;"><i class="fas fa-box"></i></div>
                 </div>`;
@@ -538,113 +599,63 @@
 
             const tbody = document.getElementById('table-dash-riwayat');
             const riwayatLimit = riwayatPesanan.slice(0, 5);
-            if(riwayatLimit.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">Belum ada transaksi</td></tr>`;
-            } else {
-                tbody.innerHTML = riwayatLimit.map(r => `
-                    <tr><td>${r.tgl}</td><td><strong>${r.toko}</strong></td><td>${r.namaBarang} (${r.qty} Pack)</td><td style="font-weight:bold; color:var(--success-color);">${formatRupiah(r.total)}</td></tr>
-                `).join('');
-            }
+            if(riwayatLimit.length === 0) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">Belum ada transaksi</td></tr>`;
+            else tbody.innerHTML = riwayatLimit.map(r => `<tr><td>${r.tgl}</td><td><strong>${r.toko}</strong></td><td>${r.namaBarang} (${r.qty} Pack)</td><td style="font-weight:bold; color:var(--success-color);">${formatRupiah(r.total)}</td></tr>`).join('');
         };
 
-        // =======================
-        // STOK BARANG
-        // =======================
         const renderStok = () => {
-            document.getElementById('tambah-tanggal').value = new Date().toISOString().split('T')[0];
-            const tbody = document.getElementById('table-stok');
-            const selectTambah = document.getElementById('tambah-id-barang');
-            
+            if (!document.getElementById('tambah-tanggal').value) document.getElementById('tambah-tanggal').value = new Date().toISOString().split('T')[0];
+            const tbody = document.getElementById('table-stok'); const selectTambah = document.getElementById('tambah-id-barang');
+            const prevSelect = selectTambah.value; 
+
             tbody.innerHTML = ''; selectTambah.innerHTML = '<option value="">-- Pilih Barang --</option>';
 
             items.forEach(item => {
-                const packs = getPackTersedia(item);
-                const sisaPcs = (item.stokMentah - item.stokRusak) % PCS_PER_PACK;
-                let textPack = `${packs} Pack`;
-                if(sisaPcs > 0) textPack += ` (+${sisaPcs} Pcs)`;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${item.nama}</strong></td>
-                        <td><span class="badge badge-raw">${formatNumber(item.stokMentah)} Pcs</span></td>
-                        <td><span class="badge badge-danger">${formatNumber(item.stokRusak)} Pcs</span></td>
-                        <td><span class="badge badge-ready">${textPack}</span></td>
-                        <td>
-                            <button class="btn btn-purple" style="padding: 5px 10px; font-size:12px;" onclick="editStokLengkap('${item.id}')">
-                                <i class="fas fa-edit"></i> Edit Stok
-                            </button>
-                        </td>
-                    </tr>`;
+                const packs = getPackTersedia(item); const sisaPcs = (item.stokMentah - item.stokRusak) % PCS_PER_PACK;
+                let textPack = `${packs} Pack`; if(sisaPcs > 0) textPack += ` (+${sisaPcs} Pcs)`;
+                tbody.innerHTML += `<tr><td><strong>${item.nama}</strong></td><td><span class="badge badge-raw">${formatNumber(item.stokMentah)} Pcs</span></td><td><span class="badge badge-danger">${formatNumber(item.stokRusak)} Pcs</span></td><td><span class="badge badge-ready">${textPack}</span></td><td><button class="btn btn-purple" style="padding: 5px 10px; font-size:12px;" onclick="editStokLengkap('${item.id}')"><i class="fas fa-edit"></i> Edit Stok</button></td></tr>`;
                 if (item.id) selectTambah.innerHTML += `<option value="${item.id}">${item.nama}</option>`;
             });
+            if(prevSelect) selectTambah.value = prevSelect;
         };
 
         async function tambahStok() {
             const idBarang = document.getElementById('tambah-id-barang').value;
             const qty = parseInt(document.getElementById('tambah-qty').value);
             if(!idBarang || isNaN(qty) || qty <= 0) { alert("Pilih barang & jumlah valid!"); return; }
-
             showLoading("Menyimpan Stok...");
-            try {
-                await fetch(SCRIPT_URL + "?action=addStock", {
-                    method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ id: idBarang, qty: qty })
-                });
-                document.getElementById('tambah-id-barang').value = ""; document.getElementById('tambah-qty').value = "";
-                await loadFromDatabase(); alert("Stok diperbarui.");
-            } catch (error) { alert("Gagal update."); hideLoading(); }
+            try { await fetch(SCRIPT_URL + "?action=addStock", { method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ id: idBarang, qty: qty }) });
+                document.getElementById('tambah-qty').value = ""; await loadFromDatabase(false); 
+            } catch (error) { alert("Gagal update. Cek koneksi."); hideLoading(); }
         }
 
         async function tambahJenisBarang() {
-            const nama = document.getElementById('baru-nama').value;
-            const harga = parseInt(document.getElementById('baru-harga').value);
-            const stok = parseInt(document.getElementById('baru-stok').value);
-
+            const nama = document.getElementById('baru-nama').value; const harga = parseInt(document.getElementById('baru-harga').value); const stok = parseInt(document.getElementById('baru-stok').value);
             if(!nama || isNaN(harga) || harga < 0 || isNaN(stok) || stok < 0) { alert("Isi form valid!"); return; }
-
             showLoading("Menambah Barang...");
-            try {
-                await fetch(SCRIPT_URL + "?action=addBarang", {
-                    method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ nama: nama, hargaPcs: harga, stokAwal: stok })
-                });
-                document.getElementById('baru-nama').value = ""; document.getElementById('baru-harga').value = ""; document.getElementById('baru-stok').value = "";
-                await loadFromDatabase(); alert("Barang ditambah.");
+            try { await fetch(SCRIPT_URL + "?action=addBarang", { method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ nama: nama, hargaPcs: harga, stokAwal: stok }) });
+                document.getElementById('baru-nama').value = ""; document.getElementById('baru-harga').value = ""; document.getElementById('baru-stok').value = ""; await loadFromDatabase(false); 
             } catch (error) { alert("Gagal."); hideLoading(); }
         }
 
         async function editStokLengkap(idBarang) {
             const item = items.find(i => String(i.id) === String(idBarang));
             if(!item) return;
-
-            let mentah = prompt(`Edit Stok MENTAH untuk ${item.nama}:`, item.stokMentah);
-            if(mentah === null || mentah === "") return;
-            
-            let rusak = prompt(`Edit Stok RUSAK untuk ${item.nama}:`, item.stokRusak);
-            if(rusak === null || rusak === "") return;
-
-            let nMentah = parseInt(mentah);
-            let nRusak = parseInt(rusak);
-
+            let mentah = prompt(`Edit Stok MENTAH untuk ${item.nama}:`, item.stokMentah); if(mentah === null || mentah === "") return;
+            let rusak = prompt(`Edit Stok RUSAK untuk ${item.nama}:`, item.stokRusak); if(rusak === null || rusak === "") return;
+            let nMentah = parseInt(mentah); let nRusak = parseInt(rusak);
             if (isNaN(nMentah) || isNaN(nRusak) || nMentah < 0 || nRusak < 0) { alert("Angka tidak valid!"); return; }
-            
-            showLoading("Update Stok ke Cloud...");
-            try {
-                await fetch(SCRIPT_URL + "?action=editStokMaster", {
-                    method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ id: idBarang, mentah: nMentah, rusak: nRusak })
-                });
-                await loadFromDatabase();
-                alert("Stok Mentah dan Rusak berhasil diperbarui. Stok Jadi otomatis menyesuaikan.");
-            } catch (e) { alert("Gagal update stok."); hideLoading(); }
+            showLoading("Update Stok...");
+            try { await fetch(SCRIPT_URL + "?action=editStokMaster", { method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ id: idBarang, mentah: nMentah, rusak: nRusak }) });
+                await loadFromDatabase(false); } catch (e) { alert("Gagal update stok."); hideLoading(); }
         }
 
-        // =======================
-        // PEMESANAN & CETAK NOTA
-        // =======================
         const renderFormPemesanan = () => {
-            document.getElementById('input-toko').innerHTML = daftarToko.map(toko => `<option value="${toko}">${toko}</option>`).join('');
-            document.getElementById('input-barang').innerHTML = items.map(item => { if(item.id) return `<option value="${item.id}">${item.nama}</option>`; return ''; }).join('');
+            const selectToko = document.getElementById('input-toko'); const selectBarang = document.getElementById('input-barang');
+            const prevToko = selectToko.value; const prevBarang = selectBarang.value;
+            selectToko.innerHTML = daftarToko.map(toko => `<option value="${toko}">${toko}</option>`).join('');
+            selectBarang.innerHTML = items.map(item => { if(item.id) return `<option value="${item.id}">${item.nama}</option>`; return ''; }).join('');
+            if(prevToko) selectToko.value = prevToko; if(prevBarang) selectBarang.value = prevBarang;
             updateFormOrder();
         };
 
@@ -653,116 +664,102 @@
             const item = items.find(i => String(i.id) === String(idBarang));
             if(item) {
                 document.getElementById('info-stok').innerText = `Stok Tersedia: ${getPackTersedia(item)} Pack`;
-                document.getElementById('input-harga').value = item.hargaPcs * PCS_PER_PACK; 
+                if (!document.getElementById('input-harga').dataset.edited) document.getElementById('input-harga').value = item.hargaPcs * PCS_PER_PACK; 
                 calculateTotal();
             }
         };
 
+        document.getElementById('input-harga').addEventListener('input', function() { this.dataset.edited = "true"; });
+
         const calculateTotal = () => {
-            const qty = parseInt(document.getElementById('input-qty').value) || 0;
-            const harga = parseInt(document.getElementById('input-harga').value) || 0;
+            const qty = parseInt(document.getElementById('input-qty').value) || 0; const harga = parseInt(document.getElementById('input-harga').value) || 0;
             document.getElementById('display-total').innerText = formatRupiah(qty * harga);
         };
 
         async function prosesPesanan() {
-            const idBarang = document.getElementById('input-barang').value;
-            const toko = document.getElementById('input-toko').value;
-            const rawDate = document.getElementById('input-tanggal').value;
-            const qtyPack = parseInt(document.getElementById('input-qty').value);
-            const hargaPack = parseInt(document.getElementById('input-harga').value);
-
+            const idBarang = document.getElementById('input-barang').value; const toko = document.getElementById('input-toko').value; const rawDate = document.getElementById('input-tanggal').value;
+            const qtyPack = parseInt(document.getElementById('input-qty').value); const hargaPack = parseInt(document.getElementById('input-harga').value);
             if(!rawDate || !idBarang || isNaN(qtyPack) || qtyPack <= 0 || isNaN(hargaPack) || hargaPack <= 0) { alert("Form tidak valid!"); return; }
-
             const item = items.find(i => String(i.id) === String(idBarang));
             if(qtyPack > getPackTersedia(item)) { alert("Stok kurang!"); return; }
-
             const totalHarga = qtyPack * hargaPack;
-            const payload = { tanggal: rawDate, toko: toko, namaBarang: item.nama, qtyPack: qtyPack, hargaPack: hargaPack, totalHarga: totalHarga };
-
             showLoading("Memproses Pesanan...");
-            try {
-                await fetch(SCRIPT_URL + "?action=processOrder", {
-                    method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(payload)
-                });
-                document.getElementById('input-qty').value = 1;
-                cetakNotaLokal(rawDate, toko, qtyPack, item.nama, hargaPack, totalHarga);
-                await loadFromDatabase();
+            try { await fetch(SCRIPT_URL + "?action=processOrder", { method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ tanggal: rawDate, toko: toko, namaBarang: item.nama, qtyPack: qtyPack, hargaPack: hargaPack, totalHarga: totalHarga }) });
+                document.getElementById('input-qty').value = 1; document.getElementById('input-harga').dataset.edited = ""; 
+                cetakNotaLokal(rawDate, toko, qtyPack, item.nama, hargaPack, totalHarga); await loadFromDatabase(false);
             } catch (error) { alert("Gagal memproses."); hideLoading(); }
         }
 
         function cetakNotaLokal(rawDate, toko, qtyPack, namaBarang, hargaPack, totalHarga) {
             const tglFormatted = new Date(rawDate).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
-            document.getElementById('nota-tanggal').innerText = tglFormatted;
-            document.getElementById('nota-toko').innerText = toko;
-            document.getElementById('nota-body').innerHTML = `
-                <tr>
-                    <td style="border: 1px solid #000; padding: 10px; text-align: center;">${qtyPack} Pack</td>
-                    <td style="border: 1px solid #000; padding: 10px;">${namaBarang}</td>
-                    <td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(hargaPack)}</td>
-                    <td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(totalHarga)}</td>
-                </tr>`;
-            document.getElementById('nota-total').innerText = formatRupiah(totalHarga);
+            document.querySelectorAll('.nota-tanggal').forEach(el => el.innerText = tglFormatted);
+            document.querySelectorAll('.nota-toko').forEach(el => el.innerText = toko);
+            const htmlBody = `<tr><td style="border: 1px solid #000; padding: 10px; text-align: center;">${qtyPack} Pack</td><td style="border: 1px solid #000; padding: 10px;">${namaBarang}</td><td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(hargaPack)}</td><td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(totalHarga)}</td></tr>`;
+            document.querySelectorAll('.nota-body').forEach(el => el.innerHTML = htmlBody);
+            document.querySelectorAll('.nota-total').forEach(el => el.innerText = formatRupiah(totalHarga));
             document.body.classList.add('printing-nota');
             setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-nota'); }, 1000); }, 300);
         }
 
-        // =======================
-        // SIMULASI HPP
-        // =======================
+        let isHppRendered = false;
+
         const renderHpp = () => {
-            const selectPokok = document.getElementById('hpp-barang-pokok');
-            selectPokok.innerHTML = hppBarangPokok.map((b, index) => `<option value="${index}">${b.nama}</option>`).join('');
-            
-            sinkronHargaHppUtama();
-
-            const divKomponen = document.getElementById('hpp-komponen-tambahan');
-            divKomponen.innerHTML = hppKomponen.map((k, index) => `
-                <div class="hpp-item" style="flex-wrap: wrap; gap: 10px;">
-                    <label style="cursor: pointer; display: flex; align-items: center; font-weight: normal; margin: 0; flex: 1;">
-                        <input type="checkbox" id="hpp-chk-${index}" value="${index}" onchange="hitungHpp()">
-                        <span>${k.nama}</span>
-                    </label>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <span style="font-size: 12px; color: #7f8c8d;">Harga (Rp):</span>
-                        <input type="number" id="hpp-harga-komp-${index}" class="form-control" style="width: 100px; padding: 5px;" value="${k.harga}" onchange="hitungHpp()" onkeyup="hitungHpp()" step="0.01">
-                        <span style="font-size: 12px; color: #7f8c8d;">${k.tipe === 'per_pcs' ? '/Pcs' : '/Pack'}</span>
+            if(hppBarangPokok.length > 0 && !isHppRendered) {
+                const selectPokok = document.getElementById('hpp-barang-pokok');
+                selectPokok.innerHTML = hppBarangPokok.map((b, index) => `<option value="${index}">${b.nama}</option>`).join('');
+                
+                const divKomponen = document.getElementById('hpp-komponen-tambahan');
+                divKomponen.innerHTML = hppKomponen.map((k, index) => `
+                    <div class="hpp-item" style="flex-wrap: wrap; gap: 10px;">
+                        <label style="cursor: pointer; display: flex; align-items: center; font-weight: normal; margin: 0; flex: 1;">
+                            <input type="checkbox" id="hpp-chk-${index}" value="${index}" onchange="hitungHpp()">
+                            <span>${k.nama}</span>
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="font-size: 12px; color: #7f8c8d;">Harga (Rp):</span>
+                            <input type="number" id="hpp-harga-komp-${index}" class="form-control" style="width: 100px; padding: 5px;" value="${k.harga}" onchange="hitungHpp()" onkeyup="hitungHpp()" step="0.01">
+                            <span style="font-size: 12px; color: #7f8c8d;">${k.tipe === 'per_pcs' ? '/Pcs' : '/Pack'}</span>
+                        </div>
                     </div>
-                </div>
-            `).join('');
-
-            hitungHpp();
+                `).join('');
+                
+                sinkronHargaHppUtama();
+                isHppRendered = true;
+            }
         };
 
         const sinkronHargaHppUtama = () => {
-            const idx = document.getElementById('hpp-barang-pokok').value;
-            if(idx !== "") {
-                document.getElementById('hpp-harga-pokok-custom').value = hppBarangPokok[idx].harga;
-                hitungHpp();
+            const selectPokok = document.getElementById('hpp-barang-pokok');
+            if(selectPokok && selectPokok.value !== "") { 
+                const hrg = hppBarangPokok[selectPokok.value].harga || 0;
+                document.getElementById('hpp-harga-pokok-custom').value = hrg; 
+                hitungHpp(); 
             }
         };
 
         const hitungHpp = () => {
-            const selectPokok = document.getElementById('hpp-barang-pokok');
-            if(!selectPokok.value) return;
+            if(hppBarangPokok.length === 0) return;
+            const selectPokok = document.getElementById('hpp-barang-pokok'); if(!selectPokok || !selectPokok.value) return;
+            
+            const idx = selectPokok.value;
+            if(!hppBarangPokok[idx]) return;
 
-            const barangPokok = hppBarangPokok[selectPokok.value];
+            const barangPokok = hppBarangPokok[idx];
             const hargaPokokAktual = parseFloat(document.getElementById('hpp-harga-pokok-custom').value) || 0;
             const qtyPack = parseInt(document.getElementById('hpp-qty-pack').value) || 50;
 
             let totalHpp = 0;
-            
             let rincianHtml = `<strong>[POKOK]</strong> ${barangPokok.nama}: Rp ${formatNumber(hargaPokokAktual)} x ${qtyPack} Pcs = Rp ${formatNumber(hargaPokokAktual * qtyPack)}<br>`;
             totalHpp += (hargaPokokAktual * qtyPack);
 
             hppKomponen.forEach((k, index) => {
-                const isChecked = document.getElementById(`hpp-chk-${index}`).checked;
-                if(isChecked) {
-                    const hargaKompAktual = parseFloat(document.getElementById(`hpp-harga-komp-${index}`).value) || 0;
+                const cb = document.getElementById(`hpp-chk-${index}`);
+                if(cb && cb.checked) {
+                    const inputHrg = document.getElementById(`hpp-harga-komp-${index}`);
+                    const hargaKompAktual = parseFloat(inputHrg.value) || 0;
                     
                     if(k.tipe === 'per_pcs') {
-                        let sub = hargaKompAktual * qtyPack;
-                        totalHpp += sub;
+                        let sub = hargaKompAktual * qtyPack; totalHpp += sub;
                         rincianHtml += `<strong>[TAMBAHAN]</strong> ${k.nama}: Rp ${formatNumber(hargaKompAktual)} x ${qtyPack} Pcs = Rp ${formatNumber(sub)}<br>`;
                     } else {
                         totalHpp += hargaKompAktual;
@@ -776,9 +773,12 @@
             document.getElementById('hpp-hasil-pcs').innerText = formatRupiah(totalHpp / qtyPack);
         };
 
-        // =======================
-        // LAPORAN & DOWNLOAD
-        // =======================
+        // Kalkulator Standar
+        let calcVal = "";
+        function calcInput(val) { calcVal += val; document.getElementById('calc-display').value = calcVal; }
+        function calcClear() { calcVal = ""; document.getElementById('calc-display').value = calcVal; }
+        function calcCalculate() { try { if(calcVal) { let result = new Function('return ' + calcVal)(); calcVal = String(result); document.getElementById('calc-display').value = calcVal; } } catch (e) { document.getElementById('calc-display').value = "Error"; calcVal = ""; } }
+
         const renderLaporan = () => {
             let rekapBarang = {}; items.forEach(i => rekapBarang[i.nama] = { totalPack: 0, totalRp: 0 });
             let rekapBulan = {};
@@ -789,41 +789,41 @@
                 rekapBulan[stringBulanTahun].totalPack += r.qty; rekapBulan[stringBulanTahun].totalRp += r.total;
             });
 
-            document.getElementById('table-laporan').innerHTML = Object.entries(rekapBarang).map(([nama, data]) => `
-                <tr><td><strong>${nama}</strong></td><td><span class="badge badge-info">${data.totalPack} Pack</span></td><td>${formatNumber(data.totalPack * PCS_PER_PACK)} Pcs</td><td style="font-weight:bold; color:var(--success-color);">${formatRupiah(data.totalRp)}</td></tr>`).join('');
-
+            document.getElementById('table-laporan').innerHTML = Object.entries(rekapBarang).map(([nama, data]) => `<tr><td><strong>${nama}</strong></td><td><span class="badge badge-info">${data.totalPack} Pack</span></td><td>${formatNumber(data.totalPack * PCS_PER_PACK)} Pcs</td><td style="font-weight:bold; color:var(--success-color);">${formatRupiah(data.totalRp)}</td></tr>`).join('');
             const tbodyBulanan = document.getElementById('table-laporan-bulanan');
             if(Object.keys(rekapBulan).length === 0) tbodyBulanan.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#999;">Belum ada data.</td></tr>`;
             else tbodyBulanan.innerHTML = Object.entries(rekapBulan).map(([bulan, data]) => `<tr><td><strong>${bulan}</strong></td><td>${formatNumber(data.totalPack)} Pack</td><td style="font-weight:bold; color:var(--success-color);">${formatRupiah(data.totalRp)}</td></tr>`).join('');
         };
 
         const cetakLaporan = () => { document.body.classList.add('printing-laporan'); setTimeout(() => { window.print(); document.body.classList.remove('printing-laporan'); }, 200); };
-
         const downloadExcel = () => {
             if(riwayatPesanan.length === 0) { alert("Belum ada data."); return; }
             let csvContent = "Tanggal Transaksi,Nama Pembeli (Toko),Nama Barang,Jumlah (Pack),Harga per Pack,Total Harga\n";
             riwayatPesanan.forEach(r => { csvContent += `"${r.tgl}","${r.toko}","${r.namaBarang}",${r.qty},${r.harga},${r.total}\n`; });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }));
-            link.download = "Laporan_Penjualan.csv";
-            link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' })); link.download = "Laporan_Penjualan.csv"; link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
         };
 
-        // =======================
-        // MASTER RENDER & INIT
-        // =======================
         const updateAllViews = () => { renderStok(); renderFormPemesanan(); renderDashboard(); renderLaporan(); renderHpp(); };
 
         const switchTab = (tab) => {
-            const tabs = ['dashboard', 'stok', 'pemesanan', 'hpp', 'laporan'];
+            const tabs = ['dashboard', 'stok', 'pemesanan', 'hpp', 'kalkulator', 'laporan'];
             tabs.forEach(t => { document.getElementById(`nav-${t}`).classList.remove('active'); document.getElementById(`page-${t}`).classList.add('hidden'); });
             document.getElementById(`nav-${tab}`).classList.add('active'); document.getElementById(`page-${tab}`).classList.remove('hidden');
-            const titles = { 'dashboard': 'Dashboard Analitik', 'stok': 'Manajemen Stok', 'pemesanan': 'Pemesanan', 'hpp': 'Simulasi HPP', 'laporan': 'Laporan' };
+            const titles = { 'dashboard': 'Dashboard Analitik', 'stok': 'Manajemen Stok', 'pemesanan': 'Pemesanan', 'hpp': 'Simulasi HPP', 'kalkulator': 'Kalkulator', 'laporan': 'Laporan' };
             document.getElementById('page-title').innerText = titles[tab];
             document.getElementById('sidebar').classList.remove('active'); document.getElementById('sidebar-overlay').classList.remove('active');
         };
 
-        window.onload = () => { loadFromDatabase(); };
+        window.onload = () => { 
+            loadFromDatabase(false);
+            
+            // Background polling hanya ketika tab aktif (mencegah Google nge-banned/terputus)
+            setInterval(() => {
+                if(document.visibilityState === 'visible') {
+                    loadFromDatabase(true);
+                }
+            }, 30000); 
+        };
     </script>
 </body>
 </html>
