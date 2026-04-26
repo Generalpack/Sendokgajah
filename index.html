@@ -439,16 +439,27 @@
         let daftarToko = [];
         let riwayatPesanan = [];
         
-        // Data Default Komponen Tambahan HPP
+        // Data Default Barang Pokok (Sesuai Excel)
+        let hppBarangPokok = [
+            { nama: "SENDOK NOBU BENING", harga: 110 },
+            { nama: "SENDOK NOBU PUTIH", harga: 94 },
+            { nama: "GARPU BENING", harga: 128 },
+            { nama: "GARPU PUTIH", harga: 106 }
+        ];
+
+        // Data Default Komponen Tambahan HPP (Sesuai Excel)
         let hppKomponen = [
             { nama: "TISSUE", harga: 17.875, tipe: "per_pcs" },
             { nama: "PLASTIK PEREKAT", harga: 18.5, tipe: "per_pcs" },
             { nama: "TUSUK GIGI", harga: 19.5, tipe: "per_pcs" },
             { nama: "PLASTIK PACKING KECIL", harga: 172.22, tipe: "per_pack" },
+            { nama: "PLASTIK PACKING BESAR", harga: 350, tipe: "per_pack" },
+            { nama: "KARUNG", harga: 2700, tipe: "per_pack" },
             { nama: "LABEL KECIL", harga: 25, tipe: "per_pack" },
-            { nama: "KARUNG", harga: 2700, tipe: "per_pack" }
+            { nama: "LABEL BESAR", harga: 50, tipe: "per_pack" },
+            { nama: "UPAH KECIL", harga: 833.33, tipe: "per_pack" },
+            { nama: "UPAH BESAR", harga: 833.33, tipe: "per_pack" }
         ];
-        let hppBarangPokok = [];
 
         const PCS_PER_PACK = 50;
 
@@ -485,16 +496,6 @@
                     tgl: new Date(r[0]).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'}),
                     toko: r[1], namaBarang: r[2], qty: r[3], harga: r[4], total: r[5]
                 })).reverse();
-
-                // Load Data HPP
-                if(data.hpp && data.hpp.length > 0) {
-                    hppBarangPokok = [];
-                    data.hpp.forEach(r => {
-                        if(r[0] && r[2]) hppBarangPokok.push({ nama: r[0], harga: parseFloat(r[2]) });
-                    });
-                } else {
-                    hppBarangPokok = items.map(i => ({ nama: i.nama, harga: i.hargaPcs }));
-                }
 
                 document.getElementById('input-tanggal').value = new Date().toISOString().split('T')[0];
                 updateAllViews();
@@ -612,7 +613,6 @@
             } catch (error) { alert("Gagal."); hideLoading(); }
         }
 
-        // FITUR BARU: EDIT STOK MENTAH DAN RUSAK
         async function editStokLengkap(idBarang) {
             const item = items.find(i => String(i.id) === String(idBarang));
             if(!item) return;
@@ -712,7 +712,7 @@
         // =======================
         const renderHpp = () => {
             const selectPokok = document.getElementById('hpp-barang-pokok');
-            selectPokok.innerHTML = hppBarangPokok.map((b, index) => `<option value="${index}">${b.nama} (Data Default: Rp ${b.harga}/Pcs)</option>`).join('');
+            selectPokok.innerHTML = hppBarangPokok.map((b, index) => `<option value="${index}">${b.nama}</option>`).join('');
             
             sinkronHargaHppUtama();
 
@@ -720,12 +720,12 @@
             divKomponen.innerHTML = hppKomponen.map((k, index) => `
                 <div class="hpp-item" style="flex-wrap: wrap; gap: 10px;">
                     <label style="cursor: pointer; display: flex; align-items: center; font-weight: normal; margin: 0; flex: 1;">
-                        <input type="checkbox" id="hpp-chk-${index}" value="${index}" onchange="hitungHpp()" checked>
+                        <input type="checkbox" id="hpp-chk-${index}" value="${index}" onchange="hitungHpp()">
                         <span>${k.nama}</span>
                     </label>
                     <div style="display: flex; align-items: center; gap: 5px;">
                         <span style="font-size: 12px; color: #7f8c8d;">Harga (Rp):</span>
-                        <input type="number" id="hpp-harga-komp-${index}" class="form-control" style="width: 90px; padding: 5px;" value="${k.harga}" onchange="hitungHpp()" onkeyup="hitungHpp()" step="0.01">
+                        <input type="number" id="hpp-harga-komp-${index}" class="form-control" style="width: 100px; padding: 5px;" value="${k.harga}" onchange="hitungHpp()" onkeyup="hitungHpp()" step="0.01">
                         <span style="font-size: 12px; color: #7f8c8d;">${k.tipe === 'per_pcs' ? '/Pcs' : '/Pack'}</span>
                     </div>
                 </div>
@@ -751,6 +751,7 @@
             const qtyPack = parseInt(document.getElementById('hpp-qty-pack').value) || 50;
 
             let totalHpp = 0;
+            
             let rincianHtml = `<strong>[POKOK]</strong> ${barangPokok.nama}: Rp ${formatNumber(hargaPokokAktual)} x ${qtyPack} Pcs = Rp ${formatNumber(hargaPokokAktual * qtyPack)}<br>`;
             totalHpp += (hargaPokokAktual * qtyPack);
 
@@ -758,13 +759,14 @@
                 const isChecked = document.getElementById(`hpp-chk-${index}`).checked;
                 if(isChecked) {
                     const hargaKompAktual = parseFloat(document.getElementById(`hpp-harga-komp-${index}`).value) || 0;
+                    
                     if(k.tipe === 'per_pcs') {
                         let sub = hargaKompAktual * qtyPack;
                         totalHpp += sub;
                         rincianHtml += `<strong>[TAMBAHAN]</strong> ${k.nama}: Rp ${formatNumber(hargaKompAktual)} x ${qtyPack} Pcs = Rp ${formatNumber(sub)}<br>`;
                     } else {
                         totalHpp += hargaKompAktual;
-                        rincianHtml += `<strong>[PACKAGING]</strong> ${k.nama}: Rp ${formatNumber(hargaKompAktual)} x 1 Pack = Rp ${formatNumber(hargaKompAktual)}<br>`;
+                        rincianHtml += `<strong>[PACKAGING/UPAH]</strong> ${k.nama}: Rp ${formatNumber(hargaKompAktual)} x 1 Pack = Rp ${formatNumber(hargaKompAktual)}<br>`;
                     }
                 }
             });
