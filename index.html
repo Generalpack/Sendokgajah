@@ -559,9 +559,13 @@
 
                 items = data.items.map(r => ({ id: r[0], nama: r[1], hargaPcs: r[2], stokMentah: r[3], stokRusak: r[4] }));
                 daftarToko = data.stores;
-
-                if (data.tokoFull) {data.tokoFull.forEach(t => {mapAlamatToko[t.nama] = t.alamat || "Alamat tidak ditemukan";});}
                 
+                if (data.tokoFull) {
+                    data.tokoFull.forEach(t => {
+                        mapAlamatToko[t.nama] = t.alamat || "Alamat tidak ditemukan";
+                    });
+                }
+    
                 riwayatPesanan = data.orders.map(r => ({ rawDate: r[0], tgl: new Date(r[0]).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'}), toko: r[1], namaBarang: r[2], qty: r[3], harga: r[4], total: r[5] })).reverse();
                 
                 if(data.hppPokok && data.hppPokok.length > 0) hppBarangPokok = data.hppPokok;
@@ -701,6 +705,8 @@
             const tglFormatted = new Date(rawDate).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
             document.querySelectorAll('.nota-tanggal').forEach(el => el.innerText = tglFormatted);
             document.querySelectorAll('.nota-toko').forEach(el => el.innerText = toko);
+           const alamat = mapAlamatToko[toko] || "Alamat tidak ditemukan";
+            document.querySelectorAll('.nota-alamat').forEach(el => el.innerText = alamat);
             const htmlBody = `<tr><td style="border: 1px solid #000; padding: 10px; text-align: center;">${qtyPack} Pack</td><td style="border: 1px solid #000; padding: 10px;">${namaBarang}</td><td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(hargaPack)}</td><td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(totalHarga)}</td></tr>`;
             document.querySelectorAll('.nota-body').forEach(el => el.innerHTML = htmlBody);
             document.querySelectorAll('.nota-total').forEach(el => el.innerText = formatRupiah(totalHarga));
