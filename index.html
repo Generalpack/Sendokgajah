@@ -562,7 +562,7 @@
                 
                 if (data.tokoFull) {
                     data.tokoFull.forEach(t => {
-                        mapAlamatToko[t.nama] = t.alamat || "Alamat tidak ditemukan";
+                        mapAlamatToko[t.nama] = t['AlamatToko'] || t.alamat || "Alamat tidak ditemukan";
                     });
                 }
     
