@@ -508,7 +508,7 @@
 
     <script>
         // MASUKKAN URL BARU SETELAH MEMBUAT "NEW DEPLOYMENT"
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNyrRPX1Nwqy77ytw58DlIj81hlb2xj81hjCr2pe8BgzweuieG9tc9YS9Gl4I0CbyS5g/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDllrxqPH2H5KuSh39YA7Z3rqeaf-7450ez2dqIZIgUhXt2PV_WAmxCuSEVS9gwkiA2g/exec";
         
         let items = [];
         let daftarToko = [];
@@ -562,13 +562,13 @@
                 items = data.items.map(r => ({ id: r[0], nama: r[1], hargaPcs: r[2], stokMentah: r[3], stokRusak: r[4] }));
                 daftarToko = data.stores;
                 
+               // Pastikan ini tepat di bawah baris daftarToko = data.stores;
                 if (data.tokoFull) {
+                    mapAlamatToko = {}; // Reset dulu supaya bersih
                     data.tokoFull.forEach(t => {
-                        // Pastikan t.nama dan t.alamat sesuai dengan yang dikirim Apps Script
-                        if (t.nama) {
-                            mapAlamatToko[t.nama] = t.alamat || t.AlamatToko || "Alamat tidak tersedia";
-                        }
+                        mapAlamatToko[t.nama] = t.alamat; 
                     });
+                    console.log("Data Alamat Terisi:", mapAlamatToko); // Cek di Inspect Element (F12)
                 }
     
                 riwayatPesanan = data.orders.map(r => ({ rawDate: r[0], tgl: new Date(r[0]).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'}), toko: r[1], namaBarang: r[2], qty: r[3], harga: r[4], total: r[5] })).reverse();
