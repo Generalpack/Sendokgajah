@@ -448,6 +448,7 @@
                 <div style="flex: 1; text-align: right;">
                     <p class="nota-tanggal" style="font-size: 14px; margin: 0; color: #555;"></p>
                     <p class="nota-toko" style="font-size: 18px; font-weight: bold; margin: 4px 0 0 0;"></p>
+                    <p class="nota-alamat" style="font-size: 12px; margin: 2px 0 0 0; color: #444; font-style: italic;"></p>
                 </div>
             </div>
             <table class="nota-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
@@ -484,6 +485,7 @@
                 <div style="flex: 1; text-align: right;">
                     <p class="nota-tanggal" style="font-size: 14px; margin: 0; color: #555;"></p>
                     <p class="nota-toko" style="font-size: 18px; font-weight: bold; margin: 4px 0 0 0;"></p>
+                    <p class="nota-alamat" style="font-size: 12px; margin: 2px 0 0 0; color: #444; font-style: italic;"></p>
                 </div>
             </div>
             <table class="nota-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
@@ -562,7 +564,10 @@
                 
                 if (data.tokoFull) {
                     data.tokoFull.forEach(t => {
-                        mapAlamatToko[t.nama] = t['AlamatToko'] || t.alamat || "Alamat tidak ditemukan";
+                        // Pastikan t.nama dan t.alamat sesuai dengan yang dikirim Apps Script
+                        if (t.nama) {
+                            mapAlamatToko[t.nama] = t.alamat || t.AlamatToko || "Alamat tidak tersedia";
+                        }
                     });
                 }
     
@@ -701,18 +706,35 @@
             } catch (error) { alert("Gagal memproses."); hideLoading(); }
         }
 
-        function cetakNotaLokal(rawDate, toko, qtyPack, namaBarang, hargaPack, totalHarga) {
-            const tglFormatted = new Date(rawDate).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
-            document.querySelectorAll('.nota-tanggal').forEach(el => el.innerText = tglFormatted);
-            document.querySelectorAll('.nota-toko').forEach(el => el.innerText = toko);
+       function cetakNotaLokal(rawDate, toko, qtyPack, namaBarang, hargaPack, totalHarga) {
+           const tglFormatted = new Date(rawDate).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
+           
+           // Ambil alamat dari map
            const alamat = mapAlamatToko[toko] || "Alamat tidak ditemukan";
-            document.querySelectorAll('.nota-alamat').forEach(el => el.innerText = alamat);
-            const htmlBody = `<tr><td style="border: 1px solid #000; padding: 10px; text-align: center;">${qtyPack} Pack</td><td style="border: 1px solid #000; padding: 10px;">${namaBarang}</td><td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(hargaPack)}</td><td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(totalHarga)}</td></tr>`;
-            document.querySelectorAll('.nota-body').forEach(el => el.innerHTML = htmlBody);
-            document.querySelectorAll('.nota-total').forEach(el => el.innerText = formatRupiah(totalHarga));
-            document.body.classList.add('printing-nota');
-            setTimeout(() => { window.print(); setTimeout(() => { document.body.classList.remove('printing-nota'); }, 1000); }, 300);
-        }
+           
+           // Update tampilan nota
+           document.querySelectorAll('.nota-tanggal').forEach(el => el.innerText = tglFormatted);
+           document.querySelectorAll('.nota-toko').forEach(el => el.innerText = toko);
+           
+           // UPDATE BAGIAN ALAMAT INI
+           document.querySelectorAll('.nota-alamat').forEach(el => el.innerText = alamat);
+           
+           const htmlBody = `<tr>
+           <td style="border: 1px solid #000; padding: 10px; text-align: center;">${qtyPack} Pack</td>
+           <td style="border: 1px solid #000; padding: 10px;">${namaBarang}</td>
+           <td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(hargaPack)}</td>
+           <td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(totalHarga)}</td>
+           </tr>`;
+           
+           document.querySelectorAll('.nota-body').forEach(el => el.innerHTML = htmlBody);
+           document.querySelectorAll('.nota-total').forEach(el => el.innerText = formatRupiah(totalHarga));
+           
+           document.body.classList.add('printing-nota');
+           setTimeout(() => { 
+               window.print(); 
+               setTimeout(() => { document.body.classList.remove('printing-nota'); }, 1000); 
+           }, 300);
+       }
 
         let isHppRendered = false;
 
