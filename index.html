@@ -709,46 +709,54 @@
        function cetakNotaLokal(rawDate, toko, qtyPack, namaBarang, hargaPack, totalHarga) {
            const tglFormatted = new Date(rawDate).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
            
-           // LOGIKA COLLY BERDASARKAN JENIS BARANG
-           // Jika nama barang mengandung kata "Garpu", isi 48. Jika tidak (hanya sendok), isi 54.
+           // LOGIKA COLLY SPESIFIK
+           // Sendok Garpu Gajah Paket -> 48 pack/colly
+           // Sendok Gajah Paket -> 54 pack/colly
            const isiPerColly = namaBarang.toLowerCase().includes("garpu") ? 48 : 54;
            
            const jumlahColly = Math.floor(qtyPack / isiPerColly);
            const sisaPack = qtyPack % isiPerColly;
            
-           // Format tampilan: "X Pack - Y Colly(<s>c</s>)"
+           // Membuat format tampilan: "54 Pack - 1 Colly(<s>c</s>)"
            let teksColly = `${qtyPack} Pack`;
            if (jumlahColly > 0) {
-               // Menggunakan tag <s> untuk mencoret huruf c sesuai permintaan Anda
+               // Tag <s> digunakan untuk mencoret huruf c: (<s>c</s>)
                teksColly += ` - ${jumlahColly} Colly(<s>c</s>)`;
+               
+               // Jika ada sisa pack yang tidak sampai 1 colly, tampilkan sisanya
                if (sisaPack > 0) {
                    teksColly += ` ${sisaPack} Pk`;
                }
            }
-           
-           const alamat = mapAlamatToko[toko] || "Alamat tidak ditemukan";
-           
-           document.querySelectorAll('.nota-tanggal').forEach(el => el.innerText = tglFormatted);
-           document.querySelectorAll('.nota-toko').forEach(el => el.innerText = toko);
-           document.querySelectorAll('.nota-alamat').forEach(el => el.innerText = alamat);
-           
-           // Update kolom Qty di tabel nota dengan teks Colly baru
-           const htmlBody = `<tr>
-           <td style="border: 1px solid #000; padding: 10px; text-align: center; font-size: 12px;">${teksColly}</td>
-           <td style="border: 1px solid #000; padding: 10px;">${namaBarang}</td>
-           <td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(hargaPack)}</td>
-           <td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(totalHarga)}</td>
-           </tr>`;
-           
-           document.querySelectorAll('.nota-body').forEach(el => el.innerHTML = htmlBody);
-           document.querySelectorAll('.nota-total').forEach(el => el.innerText = formatRupiah(totalHarga));
-           
-           document.body.classList.add('printing-nota');
-           setTimeout(() => { 
-               window.print(); 
-               setTimeout(() => { document.body.classList.remove('printing-nota'); }, 1000); 
-           }, 300);
-       }
+
+
+    const alamat = mapAlamatToko[toko] || "Alamat tidak ditemukan";
+
+    // Update elemen-elemen nota
+    document.querySelectorAll('.nota-tanggal').forEach(el => el.innerText = tglFormatted);
+    document.querySelectorAll('.nota-toko').forEach(el => el.innerText = toko);
+    document.querySelectorAll('.nota-alamat').forEach(el => el.innerText = alamat);
+
+    // Render tabel nota (Teks colly masuk ke kolom Qty)
+    const htmlBody = `<tr>
+        <td style="border: 1px solid #000; padding: 10px; text-align: center; font-size: 13px; line-height: 1.2;">
+            ${teksColly}
+        </td>
+        <td style="border: 1px solid #000; padding: 10px;">${namaBarang}</td>
+        <td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(hargaPack)}</td>
+        <td style="border: 1px solid #000; padding: 10px; text-align: right;">${formatRupiah(totalHarga)}</td>
+    </tr>`;
+
+    document.querySelectorAll('.nota-body').forEach(el => el.innerHTML = htmlBody);
+    document.querySelectorAll('.nota-total').forEach(el => el.innerText = formatRupiah(totalHarga));
+
+    // Proses Printing
+    document.body.classList.add('printing-nota');
+    setTimeout(() => { 
+        window.print(); 
+        setTimeout(() => { document.body.classList.remove('printing-nota'); }, 1000); 
+    }, 300);
+}
         
         let isHppRendered = false;
 
